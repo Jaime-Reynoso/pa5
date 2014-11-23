@@ -106,6 +106,13 @@ void freeCustomers(customer** customerArray)
 
 int main(int argc, char* argv[])
 {
+	pthread_t tid; //the thread identifier 
+	pthread_mutex_init(&mutex, NULL);
+	//pthread_attr_t attr; //the set of attributes for the thread
+
+	//pthread_attr_init(&attr); //get the default attributes
+	//pthread_create(&tid, &attr, thread, )
+
 	int totalRevenueProduced, numCategories = 0;
 	totalRevenueProduced = 0;
 	char* categories;
@@ -142,7 +149,11 @@ int main(int argc, char* argv[])
 	}
 	fclose(f_categories);
 
-	//create thread for each category
+	for(i=0; i<numCategories; i++)
+	{
+		pthread_create(&tid, 0, processBookOrders, 0);
+	}
+	pthread_exit(0);
 
 	return 0;
 }
