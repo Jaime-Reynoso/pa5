@@ -60,11 +60,64 @@ customer **readDatabase(FILE *database)
 	return customerArr;
 }
 
+/*
+*	This is the function for the producer thread
+*/
 
-
-void readBookOrders()
+void readBookOrders(File *orders)
 {
-	//reads in book orders and puts in queue determined by category (producer)
+	char order_temp[256];
+	bookOrder *head = NULL;
+	bookOrder *temp = NULL;
+	initializeBookStruct(head);
+	initializeBookStruct(temp);
+	char token_delim[2] = "\"|";
+	char* token;
+	int counter = 0;
+
+	if(orders == NULL) perror("Sorry, but the file seems to be null");
+	else{
+
+		temp = head;
+		while(!feof(orders)){
+			fgets(order_temp, 256, orders);
+			token = strtok(order_temp, token_delim);
+			temp = (bookOrder*) malloc(sizeof(bookOrder));
+
+			while(token != NULL){
+				counter++;
+				switch(counter){
+					case 1:
+						temp -> title = token;
+					case 2:
+						temp -> price = atof(token);
+					case 3:
+						temp -> customer_ID = atoll(token);
+					case 4:
+						temp -> category = token;
+					default:
+						perror("There seems to have been a problem extracting the order");
+				}
+				
+			}
+			counter = 0;
+			temp = head -> next;
+
+		}
+	}
+
+
+}
+/*
+*	This is just a method to initialize a book order 
+*/
+
+void initializeBookStruct(bookOrder *pointer){
+	pointer->title = NULL;
+	pointer->price = 0;
+	pointer->customer_ID = 0;
+	pointer->category = NULL;
+	pointer->next = NULL;
 }
 
 //function that each thread calls, processing the orders for their individual category

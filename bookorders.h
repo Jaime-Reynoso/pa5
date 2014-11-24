@@ -20,7 +20,6 @@ struct customer{
 
 typedef struct customer customer;
 
-
 /*
 *	Node struct goes into the queue and contains the book information
 */
@@ -39,22 +38,47 @@ typedef struct node node;
 *	A queue contains the size of the queue, a link to the beginning and a link to the end Queue
 */
 struct queue{
-	node* front;
-	node* end;
+	void* front;
 	int size;
 };
 
 typedef struct queue queue;
 
 /*
+*	 This is a book order struct that contains what a book order would have.
+*/
+struct bookOrder{
+	char* title;
+	float price;
+	int *customer_ID;
+	char *category;
+	struct bookOrder* next;
+}
+typedef struct bookOrder bookOrder;
+/*
 *	This method initializes  the Queue by giving it a size of 0 and sets both the nodes equal to NULL
 */
 queue* initializeQueue();
 
 /*
+*	This is a method to initialize a bookOrder Struct
+*/
+void initializeBookStruct(bookOrder* pointer);
+
+/*
 *	This method adds the books into the Queue
 */
 queue* createQueue(FILE* order);
+
+/*
+*	This is the processor Thread method
+*/
+void readBookOrders(File *orders);
+
+/*
+*	This is going to be used to pop items from a queue
+*/
+void* pop(queue *queue);
 
 /*
 *	 This method inserts a new item into an already initialized Queue
