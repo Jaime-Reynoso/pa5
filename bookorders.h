@@ -3,6 +3,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+
+#DEFINE max 5
+
+
 /*
 *	Customer Struct contains name, customer ID. balance, address, state. zip and a list of both purchased
 *	and rejected books
@@ -39,6 +43,7 @@ typedef struct node node;
 */
 struct queue{
 	void* front;
+	char *category;
 	int size;
 };
 
@@ -58,7 +63,7 @@ typedef struct bookOrder bookOrder;
 /*
 *	This method initializes  the Queue by giving it a size of 0 and sets both the nodes equal to NULL
 */
-queue* initializeQueue();
+queue* initializeQueue(char * category);
 
 /*
 *	This is a method to initialize a bookOrder Struct

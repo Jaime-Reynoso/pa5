@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include "bookorders.h"
 
+queue **queue_array;
+char **categories;
+int i = 0;
+
 //adds character to end of string
 char* stradd(const char* a, const char* b){
 	size_t len = strlen(a) + strlen(b);
@@ -98,10 +102,22 @@ void readBookOrders(File *orders)
 					default:
 						perror("There seems to have been a problem extracting the order");
 				}
-				
+				int count_cat;
+				for(count_cat = 0; count_cat < sizeof(queue_array)/sizeof(queue*); count_cat++ ){
+					if(strcmp(queue_array[count_cat]->category, temp->category) == 0){
+						if(queue_array[count_cat]->front == NULL) queue_array->front = temp;
+						else{
+							if(queue_array[count_cat]->size <= 5){
+								temp->next = queue_array[count_cat]->front;
+								queue_array[count_cat]->front = temp;
+								queue_array[count_cat]->size++;
+							}
+
+						}
+					}
+				}
+
 			}
-			counter = 0;
-			temp = head -> next;
 
 		}
 	}
@@ -149,6 +165,14 @@ void addToQueue(char* category)
 	//adds book order to queue
 }
 
+queue initializeQueue(char* category){
+	queue temp_queue;
+	temp_queue.front = NULL;
+	temp_queue.category = category;
+	temp_queue.size = 0;
+	return temp_queue;
+}
+
 void freeCustomers(customer** customerArray)
 {
 	int i;
@@ -159,6 +183,26 @@ void freeCustomers(customer** customerArray)
 
 int main(int argc, char* argv[])
 {
+	if(argc!= 4){
+		printf("Error: Incorrect Input \n");
+		printf("Correct Arguments: ./bookorders [arg1] [arg2] [arg3]\n");
+		printf("Arg1- The name of the database input file \nArg2 - The name of the book order input file\n");
+		printf("Arg3 - The name of the category input file\n");
+	}
+	File *categories = fopen(argv[3], "r");
+
+	queue_array = malloc(sizeof(queue*));
+
+	int i, b;
+	char category[64];
+	while(!feof(categories)){
+		i++;
+		queue_array = realloc(sizeof(queue*)*i);
+		queue_array[i] = (queue*) malloc(sizeof(queue));
+		fgets(category, 64, categories);
+		queue_array[i] = initalizeQueue(category);
+	}
+
 	pthread_t tid; //the thread identifier 
 	pthread_mutex_init(&mutex, NULL);
 	//pthread_attr_t attr; //the set of attributes for the thread
