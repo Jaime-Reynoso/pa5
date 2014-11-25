@@ -5,8 +5,8 @@
 #include "bookorders.h"
 
 queue **queue_array;
-char **categories;
-int i = 0;
+FILE *temp_order;
+
 
 //adds character to end of string
 char* stradd(const char* a, const char* b){
@@ -70,24 +70,29 @@ customer **readDatabase(FILE *database)
 
 void readBookOrders(File *orders)
 {
+	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
-	bookOrder *head = NULL;
+	//bookOrder *head = NULL;
 	bookOrder *temp = NULL;
-	initializeBookStruct(head);
+	//initializeBookStruct(head);
 	initializeBookStruct(temp);
 	char token_delim[2] = "\"|";
 	char* token;
-	int counter = 0;
+	int counter;
 
-	if(orders == NULL) perror("Sorry, but the file seems to be null");
+	if(orders == NULL){
+		printf("Orders have been completely processed\n");
+	}
 	else{
 
-		temp = head;
+		temp_order = fopen("temporaryOrder.txt", "w+");
+		//temp = head;
 		while(!feof(orders)){
 			fgets(order_temp, 256, orders);
 			token = strtok(order_temp, token_delim);
 			temp = (bookOrder*) malloc(sizeof(bookOrder));
 
+			counter = 0;
 			while(token != NULL){
 				counter++;
 				switch(counter){
@@ -105,29 +110,62 @@ void readBookOrders(File *orders)
 				int count_cat;
 				for(count_cat = 0; count_cat < sizeof(queue_array)/sizeof(queue*); count_cat++ ){
 					if(strcmp(queue_array[count_cat]->category, temp->category) == 0){
-						if(queue_array[count_cat]->front == NULL) queue_array->front = temp;
+						if(queue_array[count_cat]->front == NULL){
+						 queue_array[count_cat]->front = temp;
+						}
 						else{
 							if(queue_array[count_cat]->size <= 5){
 								temp->next = queue_array[count_cat]->front;
 								queue_array[count_cat]->front = temp;
 								queue_array[count_cat]->size++;
 							}
+							else{
+								fputs(order_temp, temp_order);
+							}
 
 						}
 					}
 				}
 
+
 			}
 
 		}
-	}
 
+	/*
+	*	Here I'm deleting the old file name with all the orders and setting the File Pointer equal to the new file
+	*	with the orders that haven't been completed yet
+	*/
+	char *fileName;
+	fileName = recover_filename(orders);
+	unlink(fileName);
+	rename(temp_order, filename);
+	orders = temp_order;
+	temp_order = NULL;
+
+	}
 
 }
 /*
+*	This is a method to recover the filename from the pointer
+*/
+char * recover_filename(FILE * f) { 
+  int fd; 
+  char fd_path[255]; 
+  char * filename = malloc(255); 
+  ssize_t r;
+  
+  fd = fileno(f); 
+  sprintf(fd_path, "/proc/self/fd/%d", fd); 
+  r = readlink(fd_path, filename, 255); 
+  filename[r] = '\0';
+  return filename; 
+} 
+
+
+/*
 *	This is just a method to initialize a book order 
 */
-
 void initializeBookStruct(bookOrder *pointer){
 	pointer->title = NULL;
 	pointer->price = 0;
@@ -267,6 +305,9 @@ int main(int argc, char* argv[])
 		fgets(category, 64, categories);
 		queue_array[i] = initalizeQueue(category);
 	}
+
+
+
 
 	pthread_t tid; //the thread identifier 
 	pthread_mutex_init(&mutex, NULL);
