@@ -18,8 +18,8 @@ struct customer{
 	char* address;
 	char* state;
 	char* zip;
-	queue* list_purchased;
-	queue* list_rejected;
+	struct queue* list_purchased;
+	struct queue* list_rejected;
 };
 
 typedef struct customer customer;
@@ -27,16 +27,16 @@ typedef struct customer customer;
 /*
 *	Node struct goes into the queue and contains the book information
 */
-struct node{
+/*struct node{
 	char* title;
 	char* price;
 	char* custID;
 	char* category;
 	float remainingBalance;
 	struct node* next;
-};
+};*/
 
-typedef struct node node;
+//typedef struct node node;
 
 /*
 *	A queue contains the size of the queue, a link to the beginning and a link to the end Queue
@@ -57,6 +57,7 @@ struct bookOrder{
 	float price;
 	int *customer_ID;
 	char *category;
+	float remainingBalance;
 	struct bookOrder* next;
 }
 typedef struct bookOrder bookOrder;
@@ -88,13 +89,13 @@ void* pop(queue *queue);
 /*
 *	 This method inserts a new item into an already initialized Queue
 */
-queue* insertItem(queue* queue, node* item);
+queue* insertItem(queue* queue, bookOrder* item);
 
 /*
 *	Determines whether the person has enough credit to purchase the book, and then decides what list to add the purchase
 *	to. The accepted purchase or the Rejected list.
 */
-queue* insertOrder(customer* customer, node *newNode, int list);
+queue* insertOrder(customer* customer, bookOrder *newNode, int list);
 
 /*
 *	The Queue is on the heap, so in order to not have memory leaks freeQueue frees each individual node, then the Queue itself.

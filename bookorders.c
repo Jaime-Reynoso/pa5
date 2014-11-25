@@ -137,27 +137,92 @@ void initializeBookStruct(bookOrder *pointer){
 }
 
 //function that each thread calls, processing the orders for their individual category
-void processBookOrders()
+void processBookOrders(char* category)
 {
 	//initialize mutex
-	//extracts book order threads for its category (consumer)
-	//one consumer per category
-	//prints individual orders when processed
-	//uses customer database
-	//gets customer from customer array
-	//adds info to either purchased list or rejected list
-}
+	pthread_mutex_t lock;
+	pthread_mutex_lock(&lock);
 
+	queue* queue;
+	customer* temp_customer;
+	bookOrder* tempOrder = queue->front;
+	int q_size = queue->size;
 
-//gets the index of the customer id from the customer array
-int getCustID()
-{
-
+	while(q_size != 0)
+	{
+		if(strcmp(category, tempOrder->category)) //order matches thread's category
+		{
+			//find customer in customer array
+			temp_customer = customerArray[tempOrder->customer_ID % 100]
+			if(temp_customer->balance > tempOrder->price) //atof()??
+			{
+				bookOrder* purchased_order = malloc(sizeof(bookOrder));
+				purchased_order->title = tempOrder->title;
+				purchased_order->price = tempOrder->price;
+				purchased_order->customer_ID = tempOrder->customer_ID;
+				purchased_order->category = tempOrder->category;
+				purchesed_order->remainingBalance = tempOrder->remainingBalance;
+				temp_customer->list_purchased = insertOrder(temp_customer, purchased_order, true);
+				totalRevenueProduced += tempOrder->price; //atof()??
+				printf("Order Successful:\nTitle: %s \nPrice: %s \nName: %s\n Address: %s %s %s", purchased_order->title, purchased_order->price, temp_customer->name, temp_customer->address, temp_customer->state, temp_customer->zip);
+			} else
+			{
+				bookOrder* rejected_order = malloc(sizeof(bookOrder));
+				purchased_order->title = tempOrder->title;
+				purchased_order->price = tempOrder->price;
+				purchased_order->customer_ID = tempOrder->customer_ID;
+				purchased_order->category = tempOrder->category;
+				purchesed_order->remainingBalance = tempOrder->remainingBalance;
+				temp_customer->list_rejected = insertOrder(temp_customer, rejected, false);
+				printf("Order Rejected:\nTitle: %s \nPrice: %s \nName: %s\n Address: %s %s %s", purchased_order->title, purchased_order->price, temp_customer->name, temp_customer->address, temp_customer->state, temp_customer->zip);
+			}
+		}
+		tempOrder = tempOrder->next;
+		q_size--;
+	}
+	
+	pthread_mutex_unlock(&lock);
 }
 
 void printFinalReport(customer** customerArray)
 {
+	//print node by node each element in queue until empty
 
+	bookOrder* bookOrderPtr;
+	int i;
+	for(i=0; i<100; i++)
+	{
+		if(customerArray[i] != NULL)
+		{
+			printf("Customer Name: %s \nCustomer ID: %s \nRemaining Balance: %f \n", customerArray[i]->name, customerArray[i]->custID, customerArray[i]->balance);
+			printf("Successful Orders: \n");
+			if(customerArray[i]->list_purchased->size >0)
+			{
+				bookOrderPtr = customerArray->list_purchased->front;
+				while(customerArray[i]->list_purchased->size >0)
+				{
+					printf("%s, %s, %f \n", bookOrderPtr->title, bookOrderPtr->price, bookOrderPtr->remainingBalance);
+					bookOrderPtr = bookOrderPtr->next;
+					customerArray[i]->list_purchased->size--;
+				}
+			}
+
+			printf("Rejected Orders: \n");
+			if(customerArray[i]->list_rejected->size >0)
+			{
+				bookOrderPtr = customerArray->list_rejected->front;
+				while(customerArray[i]->list_purchased->size >0)
+				{
+					printf("%s, %s, %f \n", bookOrderPtr->title, bookOrderPtr->price, bookOrderPtr->remainingBalance);
+					bookOrderPtr = bookOrderPtr->next;
+					customerArray[i]->list_rejected->size--;
+				}
+			}
+		}
+
+	}
+
+	printf("Total Revenue Produced: %f\n, totalRevenueProduced");
 }
 
 void addToQueue(char* category)
@@ -165,11 +230,11 @@ void addToQueue(char* category)
 	//adds book order to queue
 }
 
-queue initializeQueue(char* category){
-	queue temp_queue;
-	temp_queue.front = NULL;
-	temp_queue.category = category;
-	temp_queue.size = 0;
+queue* initializeQueue(char* category){
+	queue* temp_queue;
+	temp_queue->front = NULL;
+	temp_queue->category = category;
+	temp_queue->size = 0;
 	return temp_queue;
 }
 
@@ -205,6 +270,7 @@ int main(int argc, char* argv[])
 
 	pthread_t tid; //the thread identifier 
 	pthread_mutex_init(&mutex, NULL);
+
 	//pthread_attr_t attr; //the set of attributes for the thread
 
 	//pthread_attr_init(&attr); //get the default attributes

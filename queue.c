@@ -17,7 +17,7 @@ queue* initializeQueue()
 queue* createQueue(FILE* order)
 {
 	//builds queue from order file
-	//reads line and assigns new node values from each token
+	//reads line and assigns new bookOrder values from each token
 	
 	queue* newQueue;
 	newQueue = initializeQueue();
@@ -41,32 +41,32 @@ queue* createQueue(FILE* order)
 	sep = "|\n";
 	token = strtok_r(string, sep, &hold);
 
-	while (token != NULL){ //create orderNodes from the string
+	while (token != NULL){ //create orderbookOrders from the string
 
-		node *newNode = (node*)malloc(sizeof(node));
-		newNode->title = token;
+		bookOrder *newbookOrder = (bookOrder*)malloc(sizeof(bookOrder));
+		newbookOrder->title = token;
 		token = strtok_r(NULL, sep, &hold);
-		newNode->price = token;
+		newbookOrder->price = token;
 		token = strtok_r(NULL, sep, &hold);
-		newNode->custID = token;
+		newbookOrder->custID = token;
 		token = strtok_r(NULL, sep, &hold);
-		newNode->category = token;
+		newbookOrder->category = token;
 		token = strtok_r(NULL, sep, &hold);
-		newNode->remainingBalance = 0;
-		newNode->next = NULL;
+		newbookOrder->remainingBalance = 0;
+		newbookOrder->next = NULL;
 
-		//newQueue = insertItem(newQueue, newNode);
+		//newQueue = insertItem(newQueue, newbookOrder);
 
-		insertItem(newQueue, newNode);
+		insertItem(newQueue, newbookOrder);
 		
-		/*if (newQueue->front == NULL){ //first node
-			newQueue->front = newNode;
-			newQueue->end = newNode;
+		/*if (newQueue->front == NULL){ //first bookOrder
+			newQueue->front = newbookOrder;
+			newQueue->end = newbookOrder;
 			newQueue->size++;
 		}
-		else { // not the first node
-			newQueue->end->next = newNode;
-			newQueue->end = newNode;
+		else { // not the first bookOrder
+			newQueue->end->next = newbookOrder;
+			newQueue->end = newbookOrder;
 			newQueue->size++;
 		}*/
 	}
@@ -74,9 +74,9 @@ queue* createQueue(FILE* order)
 
 }
 
-void insertItem(queue* queue, node* item)
+void insertItem(queue* queue, bookOrder* item)
 {
-	node* newNode;
+	bookOrder* newbookOrder;
 
 	if (item == NULL)
 	{
@@ -84,43 +84,43 @@ void insertItem(queue* queue, node* item)
 		//return NULL;
 	}
 
-	/*if (newQueue->front == NULL){ //first node
-	newQueue->front = newNode;
-	newQueue->end = newNode;
+	/*if (newQueue->front == NULL){ //first bookOrder
+	newQueue->front = newbookOrder;
+	newQueue->end = newbookOrder;
 	newQueue->size++;
 	}
-	else { // not the first node
-	newQueue->end->next = newNode;
-	newQueue->end = newNode;
+	else { // not the first bookOrder
+	newQueue->end->next = newbookOrder;
+	newQueue->end = newbookOrder;
 	newQueue->size++;
 	}*/
 
-	newNode = item;
-	newNode->next = NULL;
+	newbookOrder = item;
+	newbookOrder->next = NULL;
 
 	if (queue == NULL)
 	{
 		printf("queue not initialized");
-		free(newNode);
+		free(newbookOrder);
 		//return queue;
 	}
-	else if (queue->front == NULL && queue->end == NULL) //fist node added 
+	else if (queue->front == NULL && queue->end == NULL) //fist bookOrder added 
 	{
-		queue->front = queue->end = newNode;
+		queue->front = queue->end = newbookOrder;
 		queue->size++;
 	}
 		
 	else //adding to existing list
 	{
-		queue->end->next = newNode;
-		queue->end = newNode;
+		queue->end->next = newbookOrder;
+		queue->end = newbookOrder;
 		queue->size++;
 	}
 		
 	//return queue;
 }
 
-queue* insertOrder(customer* customer, node* newNode, bool acceptedOrder)
+queue* insertOrder(customer* customer, bookOrder* newbookOrder, bool acceptedOrder)
 {
 
 	//queue* acceptedQueue;
@@ -128,12 +128,12 @@ queue* insertOrder(customer* customer, node* newNode, bool acceptedOrder)
 
 	if (acceptedOrder) //add to purchased list
 	{
-		insertItem(customer->list_purchased, newNode);
+		insertItem(customer->list_purchased, newbookOrder);
 		return customer->list_purchased;
 	}
 	else //add to rejected list
 	{
-		insertItem(customer->list_rejected, newNode);
+		insertItem(customer->list_rejected, newbookOrder);
 		return customer->list_rejected;
 	}
 
@@ -155,7 +155,7 @@ queue* insertOrder(customer* customer, node* newNode, bool acceptedOrder)
 	else
 	{
 		//value = queue->first->data
-		node* temp = queue->front;
+		bookOrder* temp = queue->front;
 		queue->front = queue->front->next;
 		free(temp);
 
@@ -175,8 +175,8 @@ bool isEmpty(queue* queue)
 void freeQueue(queue* queue)
 {
 	int count = queue->size;
-	node* ptr;
-	node* prev;
+	bookOrder* ptr;
+	bookOrder* prev;
 	ptr = queue->front;
 	prev = NULL;
 	int i;
