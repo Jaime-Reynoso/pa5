@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <semaphore.h>
 //M: -> mauricio comments
 
-#DEFINE max 5
+#DEFINE MAX 5
 
 /*
 *	Customer Struct contains name, customer ID. balance, address, state. zip and a list of both purchased
@@ -41,9 +42,14 @@ typedef struct customer customer;
 *	A queue contains the size of the queue, a link to the beginning and a link to the end Queue
 */
 struct queue{
-	void* front;
+	bookOrder* cat_orders;
 	char *category;
 	int size;
+	int position_of_last_item;
+	int position_of_first_item;
+	sem_t mutex;
+	sem_t slots;
+	sem_t items;
 };
 
 typedef struct queue queue;
@@ -56,8 +62,6 @@ struct bookOrder{
 	float price;
 	int *customer_ID;
 	char *category;
-	float remainingBalance;
-	struct bookOrder* next;
 }
 typedef struct bookOrder bookOrder;
 /*
