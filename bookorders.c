@@ -342,63 +342,19 @@ int main(int argc, char* argv[])
 
 	char category[64];
 	int i;
-	for(i = 0 ; !feof(categories) ; ++i){
+	for(i = 1 ; !feof(categories) ; i++){
 
 		queue_array = (queue **) realloc(sizeof(queue*)*i);
 		fgets(category, 64, categories);
-		initializeQueue(queue_array[i], category);
+		initializeQueue(queue_array[i-1], category);
 	}
 
 	if(queue_array == NULL) perror("The Queue Array seems to be null");
 
-
-
-	//M: from my understanding you need multiple consumer threads and 1 producer thread
-	//M: I dont see them initialized anywhere in main
-
-	pthread_t tid; //the thread identifier 
-	pthread_mutex_init(&mutex, NULL);
-
-	//pthread_attr_t attr; //the set of attributes for the thread
-
-	//pthread_attr_init(&attr); //get the default attributes
-	//pthread_create(&tid, &attr, thread, )
-
 	int totalRevenueProduced, numCategories = 0;
 	totalRevenueProduced = 0;
-	char* categories;
-	customer **customerArray;
-	queue* queue;
-
-	FILE* database = fopen(argv[1], "r");
-	FILE* orders = fopen(argv[2], "r");
-
-	if (database == NULL || orders == NULL) 
-	{
-		printf("Error opening files");
-		return 1;
-	}
-
-	FILE* f_categories = fopen(argv[3], "r");
 	
-	customerArray = readDatabase(database);
-
-	if (customerArray == NULL)
-		printf("error\n");
-
-	queue = createQueue(orders);
-
-	categories = f_categories;
-
-	//reads categories into categories string
-	char buffer[100];
-	int i;
-	while (fgets(buffer, sizeof(buffer), f_categories)) 
-	{
-		categories[i] = buffer;
-		numCategories++;
-	}
-	fclose(f_categories);
+	numCategories = i;
 
 	for(i=0; i<numCategories; i++)
 	{
