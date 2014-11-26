@@ -7,6 +7,7 @@
 
 queue **queue_array;
 hash_cell *customer_database;
+static pthread_t *tids;
 
 //adds character to end of string
 char* stradd(const char* a, const char* b){
@@ -347,6 +348,12 @@ int main(int argc, char* argv[])
 		queue_array = (queue **) realloc(sizeof(queue*)*i);
 		fgets(category, 64, categories);
 		initializeQueue(queue_array[i-1], category);
+		if(pthread_create(&tids[tidIndex], NULL, producerThread, orders)
+		{
+			printf("Error creating new thread\n");
+			return 1;
+		}
+		tidIndex++;
 	}
 
 	if(queue_array == NULL) perror("The Queue Array seems to be null");
@@ -356,11 +363,22 @@ int main(int argc, char* argv[])
 	
 	numCategories = i;
 
+	tids = (pthread_t*)malloc(numCategories(category)*sizeof(pthread_t)); //initializes pthread array for each cateogory
+	tidIndex = 0; //thread ID array index
+	
 	for(i=0; i<numCategories; i++)
 	{
-		pthread_create(&tid, 0, processBookOrders, 0);
+		pthread_join(tids[i], NULL);
 	}
-	pthread_exit(0);
+	
+	//print fimal reports
+
+	freeCustomers(customerArray);
+	freeQueue(queue);
+	free(tids);
+	fclose(cutomer_database);
+	fclose(categories);
+	fclose(orders);
 
 	return 0;
 }

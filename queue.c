@@ -140,38 +140,6 @@ queue* insertOrder(customer* customer, bookOrder* newbookOrder, bool acceptedOrd
 	
 }
 
-/*queue* deleteItem(queue* queue)
-{
-	if (queue == NULL)
-	{
-		printf("list is empty\n");
-		return queue;
-	}
-	else if (queue->front == NULL && queue->end == NULL)
-	{
-		printf("list is empty\n");
-		return queue;
-	}
-	else
-	{
-		//value = queue->first->data
-		bookOrder* temp = queue->front;
-		queue->front = queue->front->next;
-		free(temp);
-
-		//return value
-	}
-
-}
-
-bool isEmpty(queue* queue)
-{
-	if (queue->size = 0)
-		return true;
-
-	return false;
-}*/
-
 void freeQueue(queue* queue)
 {
 	int count = queue->size;
