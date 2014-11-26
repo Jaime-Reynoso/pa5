@@ -36,7 +36,7 @@ customer **readDatabase(FILE *database)
 	if (strlen(string) == 0)
 		return NULL;
 
-	customer **customerArr = (customer**)malloc(200 * sizeof(customer*));
+	customer **customerArr = (customer**)malloc(100 * sizeof(customer*));
 
 	char *token, *hold, *sep;
 	hold = NULL;
@@ -58,10 +58,12 @@ customer **readDatabase(FILE *database)
 		token = strtok_r(NULL, sep, &hold);
 		newCust->zip = token;
 		
-		newCust->list_purchased = initQueue();
-		newCust->list_rejected = initQueue();
+		//newCust->success_order = initializeBookStruct();
+		//newCust->fail_order = initializeBookStruct();
+		//newCust->list_purchased = initQueue();
+		//newCust->list_rejected = initQueue();
 		
-		customerArr[getIndex(newCust->custID)] = newCust;
+		customerArr[newCust->custID) % 100] = newCust;
 		token = strtok_r(NULL, sep, &hold);
 	}
 	return customerArr;
@@ -139,13 +141,13 @@ void initializeBookStruct(bookOrder *pointer){
 
 //function that each thread calls, processing the orders for their individual category
 
-void processBookOrders()
+void processBookOrders(char* category)
 {
 
 	queue* queue;
 	customer* temp_customer;
 	bookOrder* tempOrder = queue->cat_orders;
-	int q_size = queue->size;
+	int q_size = queue->size; //
 
 	while(q_size != 0)
 	{
@@ -219,7 +221,7 @@ void initializeQueue(queue* temp_queue, char* category)
 *	This will insert a book node into the designated queue
 */
 
-void insertBookOrder(queue *order_cont, bookOrder book){
+void insertBookOrder(queue *order_cont, bookOrder* book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
 	order_cont->buffer[(++order_cont->position_of_last_item)%(order_cont->size)] = book;
@@ -231,8 +233,8 @@ void insertBookOrder(queue *order_cont, bookOrder book){
 *	This will retrieve a book from a designated queue
 */
 
-bookOrder removeBookOrder(queue *temp_order){
-	bookOrder item;
+bookOrder* removeBookOrder(queue *temp_order){
+	bookOrder* item;
 	sem_wait(&temp_order->items);
 	sem_wait(&temp_order->mutex);
 	item = temp_order->cat_orders[(++temp_order->position_of_first_item)%(temp_order->size)];
@@ -241,16 +243,7 @@ bookOrder removeBookOrder(queue *temp_order){
 	return item;
 }
 
-
-void freeCustomers(customer** customerArray)
-{
-	int i;
-	for (i = 0; i < 200; i++)
-		if (customerArray[i] != NULL)
-			free(customerArray[i]);
-}
-
-void populateCustomerDatabase(File *customer_database){
+void populateCustomerDatabase(FILE *customer_database){
 
 	char customer_temp[256];
 	customer *individual_customer;
@@ -323,6 +316,14 @@ customer *findCustomer(int customerID)
 
 	HASH_FIND_INT(customer_database, &customerID, tmp);
 	return tmp->cust;
+}
+
+void freeCustomers(customer** customerArray)
+{
+	int i;
+	for (i = 0; i < 200; i++)
+		if (customerArray[i] != NULL)
+			free(customerArray[i]);
 }
 
 int main(int argc, char* argv[])
