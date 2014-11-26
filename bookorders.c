@@ -6,6 +6,7 @@
 #include <semaphore.h>
 
 queue **queue_array;
+hash_cell *customer_database;
 
 //adds character to end of string
 char* stradd(const char* a, const char* b){
@@ -22,8 +23,10 @@ customer **readDatabase(FILE *database)
 	char *string = (char*)malloc(sizeof(char));
 	string = "";
 	c = getc(database);
+
+	char buffer[100];
 	
-	while (c != EOF)
+	while ((fgets(buffer, 100, database)) != NULL)
 	{ 
 		string = stradd(string, c);
 		c = getc(database);
@@ -78,10 +81,7 @@ void producerThread(File *orders)
 	char* token;
 	int counter;
 
-	if(orders == NULL){
-		perror("There seems to have been a problem opening the file");
-	}
-	else if(queue_array == NULL){
+	if(queue_array == NULL){
 		perror("There was an error initializing the queues");
 	}
 	else{
@@ -110,6 +110,7 @@ void producerThread(File *orders)
 				}
 				token = strtok(order_temp, token_delim);
 			}
+			temp->next = NULL;
 			int count_cat;
 			for(count_cat = 0; count_cat < sizeof(queue_array)/sizeof(queue*); count_cat++ )
 			{
@@ -136,14 +137,9 @@ void initializeBookStruct(bookOrder *pointer){
 }
 
 //function that each thread calls, processing the orders for their individual category
-void processBookOrders(char* category)
+
+void processBookOrders()
 {
-	//initialize mutex
-	//M: mutex definition should be global so that functions could share the same mutex, not local
-	//M: mutex should not wrap the whole function since it hogs resources, it should only wrap the part
-	//M: where the buffer is altered
-	pthread_mutex_t lock;
-	pthread_mutex_lock(&lock);
 
 	queue* queue;
 	customer* temp_customer;
@@ -253,6 +249,81 @@ void freeCustomers(customer** customerArray)
 			free(customerArray[i]);
 }
 
+void populateCustomerDatabase(File *customer_database){
+
+	char customer_temp[256];
+	customer *individual_customer;
+	char *customer_delim = "\",|";
+	char *token;
+	int i, customer_id;
+
+	while(!feof(customer_database)){
+		fgets(customer_temp, 256, customer_database);
+		token = strtok(customer_temp, customer_delim);
+		i = 0;
+
+		while(token != NULL){
+			i++;
+			individual_customer = malloc(sizeof(customer));
+
+			switch(i){
+				case 1:
+					strcpy(individual_customer->name, token);
+				case 2:
+					customer_id = atoll(token);
+				case 3:
+					individual_customer->balance = atof(token);
+				case 4:
+					strcpy(individual_customer->address, token);
+				case 5:
+					strcpy(individual_customer->city, token);
+				case 6:
+					strcpy(individual_customer->state, token);
+				case 7:
+					strcpy(individual_customer->zip, token);
+				default:
+					perror("Error populating the individual customer");
+			}
+			token = strtok(customer_temp, customer_delim);
+		}
+		individual_customer->success_order = NULL;
+		individual_customer->fail_order = NULL;
+
+		addCustomer(individual_customer, customer_id);
+	}
+}
+
+void addCustomer(customer* customerI, int customerID){
+	hash_cell *temp;
+
+	HASH_FIND_INT(customer_database, &customerID, temp);
+	if(temp == NULL){
+
+		temp = malloc(sizeof(hash_cell));
+		temp->customer_ID = customerID;
+		HASH_ADD_INT(customer_database, id, temp);
+	}
+	temp->cust = customerI;
+}
+
+void delete_all() {
+  hash_cell *current_user, *tmp;
+
+  HASH_ITER(hh, customer_database, current_user, tmp) {
+    HASH_DEL(customer_database,current_user);  /* delete it (users advances to next) */
+    free(current_user->cust); 
+    free(current_user);           /* free it */
+  }
+}
+
+customer *findCustomer(int customerID)
+{
+	hash_cell *tmp;
+
+	HASH_FIND_INT(customer_database, &customerID, tmp);
+	return tmp->cust;
+}
+
 int main(int argc, char* argv[])
 {
 	if(argc!= 4){
@@ -263,7 +334,9 @@ int main(int argc, char* argv[])
 		exit();
 	}
 
-	File *categories = fopen(argv[3], "r");
+	if((File *categories = fopen(argv[3], "r")) == NULL) perror("Couldn't open the category file");
+	if((File *orders = fopen(argv[2], "r")) == NULL) perror("Couldn't open the order");
+	if((File *customer_database = fopen(argv[1], "r"))==NULL) perror("Couldn't open database");
 
 	queue_array = malloc(sizeof(queue*));
 
@@ -275,6 +348,8 @@ int main(int argc, char* argv[])
 		fgets(category, 64, categories);
 		initializeQueue(queue_array[i], category);
 	}
+
+	if(queue_array == NULL) perror("The Queue Array seems to be null");
 
 
 

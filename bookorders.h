@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <semaphore.h>
+#include "uthash.h"
 //M: -> mauricio comments
 
 #DEFINE MAX 5
@@ -13,30 +14,23 @@
 */
 struct customer{
 	char* name;
-	char* custID;
 	float balance;
 	char* address;
+	char* city;
 	char* state;
 	char* zip;
-	struct queue* list_purchased; //M: customer should not point to queue, have a separate list of succ and rej orders
-	struct queue* list_rejected; //M: list needs to keep track of customer balance and price of book, queue doesn't do this
+	bookOrder* success_order;
+	bookOrder* fail_order;
+	UT_Hash_Handle hh;
 };
 
 typedef struct customer customer;
 
-/*
-*	Node struct goes into the queue and contains the book information
-*/
-/*struct node{
-	char* title;
-	char* price;
-	char* custID;
-	char* category;
-	float remainingBalance;
-	struct node* next;
-};*/
+typedef struct hash_cell{
+	int customer_ID;
+	customer cust;
+}hash_cell;
 
-//typedef struct node node;
 
 /*
 *	A queue contains the size of the queue, a link to the beginning and a link to the end Queue
@@ -62,6 +56,7 @@ struct bookOrder{
 	float price;
 	int *customer_ID;
 	char *category;
+	struct bookOrder *next;
 }
 typedef struct bookOrder bookOrder;
 /*
