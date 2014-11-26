@@ -2,10 +2,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-
+//M: -> mauricio comments
 
 #DEFINE max 5
-
 
 /*
 *	Customer Struct contains name, customer ID. balance, address, state. zip and a list of both purchased
@@ -18,8 +17,8 @@ struct customer{
 	char* address;
 	char* state;
 	char* zip;
-	struct queue* list_purchased;
-	struct queue* list_rejected;
+	struct queue* list_purchased; //M: customer should not point to queue, have a separate list of succ and rej orders
+	struct queue* list_rejected; //M: list needs to keep track of customer balance and price of book, queue doesn't do this
 };
 
 typedef struct customer customer;

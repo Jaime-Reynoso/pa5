@@ -3,6 +3,12 @@
 #include <string.h>
 #include <stdbool.h>
 #include "bookorders.h"
+//M: -> mauricio comments
+
+//M: missing mutex definitions, semaphores/conditional mutexes
+//M: mutex --> locks a global variable when a thread is working on it
+//M: semaphores/conditional mutexes --> keeps track of the state of the buffer
+//M: if buffer is full call consumer threads, if buffer is empty call producer thread
 
 queue **queue_array;
 FILE *temp_order;
@@ -70,6 +76,9 @@ customer **readDatabase(FILE *database)
 
 void readBookOrders(File *orders)
 {
+	//M: mutex definition should be global so that functions could share the same mutex, not local
+	//M: This function needs a mutex as well since it modifies the buffer
+
 	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
 	//bookOrder *head = NULL;
@@ -154,7 +163,7 @@ char * recover_filename(FILE * f) {
   char fd_path[255]; 
   char * filename = malloc(255); 
   ssize_t r;
-  
+
   fd = fileno(f); 
   sprintf(fd_path, "/proc/self/fd/%d", fd); 
   r = readlink(fd_path, filename, 255); 
@@ -178,6 +187,9 @@ void initializeBookStruct(bookOrder *pointer){
 void processBookOrders(char* category)
 {
 	//initialize mutex
+	//M: mutex definition should be global so that functions could share the same mutex, not local
+	//M: mutex should not wrap the whole function since it hogs resources, it should only wrap the part
+	//M: where the buffer is altered
 	pthread_mutex_t lock;
 	pthread_mutex_lock(&lock);
 
@@ -291,15 +303,17 @@ int main(int argc, char* argv[])
 		printf("Correct Arguments: ./bookorders [arg1] [arg2] [arg3]\n");
 		printf("Arg1- The name of the database input file \nArg2 - The name of the book order input file\n");
 		printf("Arg3 - The name of the category input file\n");
+		exit();
 	}
+
 	File *categories = fopen(argv[3], "r");
 
 	queue_array = malloc(sizeof(queue*));
 
-	int i, b;
 	char category[64];
-	while(!feof(categories)){
-		i++;
+	int
+	for(i!feof(categories)){
+
 		queue_array = realloc(sizeof(queue*)*i);
 		queue_array[i] = (queue*) malloc(sizeof(queue));
 		fgets(category, 64, categories);
@@ -308,6 +322,8 @@ int main(int argc, char* argv[])
 
 
 
+	//M: from my understanding you need multiple consumer threads and 1 producer thread
+	//M: I dont see them initialized anywhere in main
 
 	pthread_t tid; //the thread identifier 
 	pthread_mutex_init(&mutex, NULL);
