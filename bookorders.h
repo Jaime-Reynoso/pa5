@@ -4,6 +4,7 @@
 #include <string.h>
 #include <semaphore.h>
 #include "uthash.h"
+#include <sys/stat.h>
 //M: -> mauricio comments
 
 #DEFINE MAX 5

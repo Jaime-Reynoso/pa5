@@ -16,6 +16,7 @@ char* stradd(const char* a, const char* b){
 	return strcat(strcat(ret, a), b);
 }
 
+/*
 //assigns values to customer
 customer **readDatabase(FILE *database)
 {
@@ -65,6 +66,7 @@ customer **readDatabase(FILE *database)
 	}
 	return customerArr;
 }
+*/
 
 /*
 *	This is the function for the producer thread
@@ -133,69 +135,73 @@ void initializeBookStruct(bookOrder *pointer){
 	pointer->price = 0;
 	pointer->customer_ID = 0;
 	pointer->category = NULL;
+	pointer->remaining_Balance = 0;
 	pointer->next = NULL;
 }
 
 //function that each thread calls, processing the orders for their individual category
 
-void processBookOrders()
+void consumerThread(queue* queue)
 {
 
-	queue* queue;
-	customer* temp_customer;
-	bookOrder* tempOrder = queue->cat_orders;
-	int q_size = queue->size;
+	customer *temp_customer = NULL;
+	bookOrder *tempOrder = removeBookOrder(queue);
+	bookOrder *traversal_order = NULL;
 
-	while(q_size != 0)
+	while(tempOrder != NULL)
 	{
-		if(strcmp(category, tempOrder->category)) //order matches thread's category
-		{
-			//find customer in customer array
-			temp_customer = customerArray[tempOrder->customer_ID % 100]
-			if(temp_customer->balance > tempOrder->price) //atof()??
-			{
-				bookOrder* purchased_order = malloc(sizeof(bookOrder));
-				purchased_order->title = tempOrder->title;
-				purchased_order->price = tempOrder->price;
-				purchased_order->customer_ID = tempOrder->customer_ID;
-				purchased_order->category = tempOrder->category;
-				purchesed_order->remainingBalance = tempOrder->remainingBalance;
-				temp_customer->list_purchased = insertOrder(temp_customer, purchased_order, true);
-				totalRevenueProduced += tempOrder->price; //atof()??
-				printf("Order Successful:\nTitle: %s \nPrice: %s \nName: %s\n Address: %s %s %s", purchased_order->title, purchased_order->price, temp_customer->name, temp_customer->address, temp_customer->state, temp_customer->zip);
-			} else
-			{
-				bookOrder* rejected_order = malloc(sizeof(bookOrder));
-				purchased_order->title = tempOrder->title;
-				purchased_order->price = tempOrder->price;
-				purchased_order->customer_ID = tempOrder->customer_ID;
-				purchased_order->category = tempOrder->category;
-				purchesed_order->remainingBalance = tempOrder->remainingBalance;
-				temp_customer->list_rejected = insertOrder(temp_customer, rejected, false);
-				printf("Order Rejected:\nTitle: %s \nPrice: %s \nName: %s\n Address: %s %s %s", purchased_order->title, purchased_order->price, temp_customer->name, temp_customer->address, temp_customer->state, temp_customer->zip);
+		temp_customer = findCustomer(tempOrder->customer_ID);
+		sem_wait(&temp_customer->mutex);
+		if(temp_customer->balance >= tempOrder->price){
+			temp_customer->balance = temp_customer->balance - tempOrder->price;
+			tempOrder->remaining_Balance = temp_customer->balance;
+			traversal_order = temp_customer->success_order;
+			while(traversal_order != NULL){
+				traversal_order = traversal_order->next;
 			}
+			traversal_order = tempOrder;
 		}
-		tempOrder = tempOrder->next;
-		q_size--;
+		else{
+			traversal_order = temp_customer->fail_order;
+			while(traversal_order != NULL){
+				traversal_order = traversal_order->next;
+			}
+			traversal_order = tempOrder;
+		}
+		sem_post(&temp_customer->mutex);
+		tempOrder = removeBookOrder(queue);
+	
 	}
 	
-	pthread_mutex_unlock(&lock);
 }
 
-void printFinalReport(customer** customerArray)
-;
-				while(customerArray[i]->list_purchased->size >0)
-				{
-					printf("%s, %s, %f \n", bookOrderPtr->title, bookOrderPtr->price, bookOrderPtr->remainingBalance);
-					bookOrderPtr = bookOrderPtr->next;
-					customerArray[i]->list_rejected->size--;
-				}
-			}
+void printFinalReport(File* finalDatabase)
+{
+	int i;
+	customer* traversal_customer;
+	bookOrder* traversal_order;
+	for(i = 1; findCustomer(i) != NULL; i++){
+		traversal_customer = findCustomer(i);
+		fputs("== BEGIN CUSTOMER INFO ==\n", finalDatabase);
+		fputs("### BALANCE ###\n", finalDatabase);
+		fprintf(finalDatabase, "Customer Name: %s \n", traversal_customer->name);
+		fprintf(finalDatabase, "Customer ID Number %d \n", traversal_customer->success_order->customer_ID);
+		fprintf(finalDatabase, "Remaining Credit Balance after all purchases( a dollar amount) %4.2f", traversal_customer->balance);
+		fprintf(finalDatabase, "### SUCCESSFUL ORDERS ### \n");
+		traversal_order = traversal_customer->success_order;
+		while(traversal_order != NULL){
+			fprintf(finalDatabase, "\"%s\"|%4.2f|%4.2f \n", traversal_order->title, traversal_order->price, traversal_order->remaining_Balance);
+			traversal_order = traversal_order->next;
 		}
+		fprintf(finalDatabase, "### REJECTED ORDERS ### \n");
+		traversal_order = traversal_customer->fail_order;
+		while(traversal_order != NULL){
+			fprintf(finalDatabase, "\"%s\"|%4.2f\n", traversal_order->title, traversal_order->price);
+		}
+		fprintf(finalDatabase, "== END CUSTOMER INFO == \n \n \n");
 
-	}
+	}			
 
-	printf("Total Revenue Produced: %f\n, totalRevenueProduced");
 }
 
 
@@ -241,14 +247,6 @@ bookOrder removeBookOrder(queue *temp_order){
 }
 
 
-void freeCustomers(customer** customerArray)
-{
-	int i;
-	for (i = 0; i < 200; i++)
-		if (customerArray[i] != NULL)
-			free(customerArray[i]);
-}
-
 void populateCustomerDatabase(File *customer_database){
 
 	char customer_temp[256];
@@ -266,6 +264,7 @@ void populateCustomerDatabase(File *customer_database){
 			i++;
 			individual_customer = malloc(sizeof(customer));
 
+			sem_init(&individual_customer->mutex, 0, 1);
 			switch(i){
 				case 1:
 					strcpy(individual_customer->name, token);
@@ -303,6 +302,7 @@ void addCustomer(customer* customerI, int customerID){
 		temp->customer_ID = customerID;
 		HASH_ADD_INT(customer_database, id, temp);
 	}
+
 	temp->cust = customerI;
 }
 
@@ -321,6 +321,7 @@ customer *findCustomer(int customerID)
 	hash_cell *tmp;
 
 	HASH_FIND_INT(customer_database, &customerID, tmp);
+
 	return tmp->cust;
 }
 
