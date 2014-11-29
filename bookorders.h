@@ -23,6 +23,7 @@ struct customer{
 	bookOrder* success_order;
 	bookOrder* fail_order;
 	UT_Hash_Handle hh;
+	sem_t mutex;
 };
 
 typedef struct customer customer;
@@ -55,8 +56,9 @@ typedef struct queue queue;
 struct bookOrder{
 	char* title;
 	float price;
-	int *customer_ID;
+	int customer_ID;
 	char *category;
+	int remaining_Balance;
 	struct bookOrder *next;
 }
 typedef struct bookOrder bookOrder;

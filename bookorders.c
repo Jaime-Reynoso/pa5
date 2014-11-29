@@ -4,9 +4,12 @@
 #include <stdbool.h>
 #include "bookorders.h"
 #include <semaphore.h>
+#include <pthread.h>
 
 queue **queue_array;
 hash_cell *customer_database;
+void producerThread(File* something);
+void consumerThread(queue* queue);
 
 //adds character to end of string
 char* stradd(const char* a, const char* b){
@@ -180,6 +183,8 @@ void printFinalReport(File* finalDatabase)
 	int i;
 	customer* traversal_customer;
 	bookOrder* traversal_order;
+	float totalRevenueProduced = 0;
+
 	for(i = 1; findCustomer(i) != NULL; i++){
 		traversal_customer = findCustomer(i);
 		fputs("== BEGIN CUSTOMER INFO ==\n", finalDatabase);
@@ -191,6 +196,7 @@ void printFinalReport(File* finalDatabase)
 		traversal_order = traversal_customer->success_order;
 		while(traversal_order != NULL){
 			fprintf(finalDatabase, "\"%s\"|%4.2f|%4.2f \n", traversal_order->title, traversal_order->price, traversal_order->remaining_Balance);
+			totalRevenueProduced += (traversal_order->price);
 			traversal_order = traversal_order->next;
 		}
 		fprintf(finalDatabase, "### REJECTED ORDERS ### \n");
@@ -200,7 +206,9 @@ void printFinalReport(File* finalDatabase)
 		}
 		fprintf(finalDatabase, "== END CUSTOMER INFO == \n \n \n");
 
-	}			
+	}	
+
+	fprintf(finalDatabase, "Total Revenue from all purchases: %4.2f", totalRevenueProduced);		
 
 }
 
@@ -338,6 +346,7 @@ int main(int argc, char* argv[])
 	if((File *categories = fopen(argv[3], "r")) == NULL) perror("Couldn't open the category file");
 	if((File *orders = fopen(argv[2], "r")) == NULL) perror("Couldn't open the order");
 	if((File *customer_database = fopen(argv[1], "r"))==NULL) perror("Couldn't open database");
+	if((File *finalReport = fopen(finalReport.txt, "+w")) == NULL) perror("Couldn't create the final report");
 
 	queue_array = malloc(sizeof(queue*));
 
@@ -352,16 +361,22 @@ int main(int argc, char* argv[])
 
 	if(queue_array == NULL) perror("The Queue Array seems to be null");
 
-	int totalRevenueProduced, numCategories = 0;
-	totalRevenueProduced = 0;
-	
-	numCategories = i;
+	populateCustomerDatabase(customer_database);
+	int number_of_threads = sizeof(queue_array)/sizeof(queue*);
 
-	for(i=0; i<numCategories; i++)
-	{
-		pthread_create(&tid, 0, processBookOrders, 0);
+	pthread_t thread[number_of_threads+1];
+
+	for(i = 0; i <= number_of_threads;i++){
+		if(i = 0){
+			pthread_create(&thread[i], NULL, producerThread, orders);
+		}
+		else{
+			pthread_create(&thread[i], NULL, consumerThread, queue_array[i-1]);
+		}
 	}
-	pthread_exit(0);
+	for(i = 0;i <= number_of_threads; i++){
+		pthread_join(thread[i], NULL);
+	}
 
 	return 0;
 }
