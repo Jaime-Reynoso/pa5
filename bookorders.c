@@ -8,68 +8,6 @@
 
 queue **queue_array;
 hash_cell *customer_database;
-void producerThread(File* something);
-void consumerThread(queue* queue);
-
-//adds character to end of string
-char* stradd(const char* a, const char* b){
-	size_t len = strlen(a) + strlen(b);
-	char *ret = (char*)malloc(len * sizeof(char) + 1);
-	*ret = '\0';
-	return strcat(strcat(ret, a), b);
-}
-
-/*
-//assigns values to customer
-customer **readDatabase(FILE *database)
-{
-	char c;
-	char *string = (char*)malloc(sizeof(char));
-	string = "";
-	c = getc(database);
-
-	char buffer[100];
-	
-	while ((fgets(buffer, 100, database)) != NULL)
-	{ 
-		string = stradd(string, c);
-		c = getc(database);
-	}
-
-	if (strlen(string) == 0)
-		return NULL;
-
-	customer **customerArr = (customer**)malloc(200 * sizeof(customer*));
-
-	char *token, *hold, *sep;
-	hold = NULL;
-	sep = "|\n";
-	token = strtok_r(string, sep, &hold);
-	
-	while (token != NULL)
-	{
-		customer *newCust = (customer*)malloc(sizeof(customer));
-		newCust->name = token;
-		token = strtok_r(NULL, sep, &hold);
-		newCust->custID = token;
-		token = strtok_r(NULL, sep, &hold);
-		newCust->balance = atoi(token);
-		token = strtok_r(NULL, sep, &hold);
-		newCust->address = token;
-		token = strtok_r(NULL, sep, &hold);
-		newCust->state = token;
-		token = strtok_r(NULL, sep, &hold);
-		newCust->zip = token;
-		
-		newCust->list_purchased = initQueue();
-		newCust->list_rejected = initQueue();
-		
-		customerArr[getIndex(newCust->custID)] = newCust;
-		token = strtok_r(NULL, sep, &hold);
-	}
-	return customerArr;
-}
-*/
 
 /*
 *	This is the function for the producer thread
@@ -86,16 +24,32 @@ void producerThread(File *orders)
 	char* token;
 	int counter;
 
+	/*
+	*	The producer thread is going to populate the queue array, so I'm going to double check whether or not the
+	*	the queue array has been initialized.
+	*/
 	if(queue_array == NULL){
 		perror("There was an error initializing the queues");
 	}
 	else{
 
+		/*
+		*	This first while loop is going to help me iterate over the line in the file, the line contains all of
+		*	the information for the book order
+		*/
+
 		while(!feof(orders)){
+			/*
+			*	After getting the line, im going to use tokenizer to tokenize the line into useful information
+			* 	on the book order
+			*/
 			fgets(order_temp, 256, orders);
 			token = strtok(order_temp, token_delim);
 			temp = (bookOrder*) malloc(sizeof(bookOrder));
 
+			/*
+			*	The best way to separate each separate field of the book order was by using a counter.
+			*/
 			counter = 0;
 			while(token != NULL)
 			{
@@ -104,18 +58,27 @@ void producerThread(File *orders)
 				{
 					case 1:
 						temp -> title = token;
+						break;
 					case 2:
 						temp -> price = atof(token);
+						break;
 					case 3:
 						temp -> customer_ID = atoll(token);
+						break;
 					case 4:
 						temp -> category = token;
+						break;
 					default:
 						perror("There seems to have been a problem extracting the order");
+						break;
 				}
 				token = strtok(order_temp, token_delim);
 			}
 			temp->next = NULL;
+
+			/*
+			*	After I get the book order node, i use a for loop to find the right queue, then i insert the queue
+			*/
 			int count_cat;
 			for(count_cat = 0; count_cat < sizeof(queue_array)/sizeof(queue*); count_cat++ )
 			{
@@ -142,7 +105,10 @@ void initializeBookStruct(bookOrder *pointer){
 	pointer->next = NULL;
 }
 
-//function that each thread calls, processing the orders for their individual category
+/*
+*	This is the consumer thread, the consumer thread is going to obtain all the bookOrders from a queue
+* then it takes the book orders and processes them, so the only input you need are the bookOrders.
+*/
 
 void consumerThread(queue* queue)
 {
@@ -151,10 +117,22 @@ void consumerThread(queue* queue)
 	bookOrder *tempOrder = removeBookOrder(queue);
 	bookOrder *traversal_order = NULL;
 
+	/*
+	*	This first while loop will make sure the book order that you're trying to process isn't null. 
+	*/
 	while(tempOrder != NULL)
 	{
+		/*	
+		*	It'd be really unfortunate if more than one thread were to try to access the same customer
+		*	so each customer has a semaphore, which protects the customer from being accessed by multiple
+		* 	threads.
+		*/
 		temp_customer = findCustomer(tempOrder->customer_ID);
 		sem_wait(&temp_customer->mutex);
+
+		/*
+		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
+		*/
 		if(temp_customer->balance >= tempOrder->price){
 			temp_customer->balance = temp_customer->balance - tempOrder->price;
 			tempOrder->remaining_Balance = temp_customer->balance;
@@ -178,6 +156,10 @@ void consumerThread(queue* queue)
 	
 }
 
+/*
+*	This is a function that will take the file that is supposed to contain the finalReport and then iterates
+*	through each customer to find out which book orders were possible and which book orders were not possible. 
+*/
 void printFinalReport(File* finalDatabase)
 {
 	int i;
@@ -254,7 +236,11 @@ bookOrder removeBookOrder(queue *temp_order){
 	return item;
 }
 
-
+/*
+*	We use UTHASH in order to maintain a customer database, so here I go through the file that contains 
+* the customers, use a token to tokenize the customer information into different customers, then I 
+*use addCustomer to create a hash_cell, which is how im going to search for the individual customers. 
+*/
 void populateCustomerDatabase(File *customer_database){
 
 	char customer_temp[256];
@@ -276,20 +262,28 @@ void populateCustomerDatabase(File *customer_database){
 			switch(i){
 				case 1:
 					strcpy(individual_customer->name, token);
+					break;
 				case 2:
 					customer_id = atoll(token);
+					break;
 				case 3:
 					individual_customer->balance = atof(token);
+					break;
 				case 4:
 					strcpy(individual_customer->address, token);
+					break;
 				case 5:
 					strcpy(individual_customer->city, token);
+					break;
 				case 6:
 					strcpy(individual_customer->state, token);
+					break;
 				case 7:
 					strcpy(individual_customer->zip, token);
+					break;
 				default:
 					perror("Error populating the individual customer");
+					break;
 			}
 			token = strtok(customer_temp, customer_delim);
 		}
@@ -299,6 +293,10 @@ void populateCustomerDatabase(File *customer_database){
 		addCustomer(individual_customer, customer_id);
 	}
 }
+
+/*
+*	Here I build a function to add the customers to the hashmap, it checks whether the customer is already there
+*/
 
 void addCustomer(customer* customerI, int customerID){
 	hash_cell *temp;
@@ -314,6 +312,10 @@ void addCustomer(customer* customerI, int customerID){
 	temp->cust = customerI;
 }
 
+/*
+*	This function is used to delete all the customers from the database and free all the memory in the heap being used
+* up by each individual customers. 
+*/
 void delete_all() {
   hash_cell *current_user, *tmp;
 
@@ -324,6 +326,10 @@ void delete_all() {
   }
 }
 
+/*
+*	This function is going to take in the customer id (the book order will have it), and it's going to use the 
+*	UTHASH functions to retrieve the hash cell that contains the customer, then it returns the customer
+*/
 customer *findCustomer(int customerID)
 {
 	hash_cell *tmp;
@@ -333,6 +339,13 @@ customer *findCustomer(int customerID)
 	return tmp->cust;
 }
 
+/*
+*	This main function is simple, it takes in arguments, makes sure that the arguments are correct, then it
+*	attempts to open the file necessary. 
+*	I use the category file to create each separate queue
+*	I then populate the customers and create each individual thread to make sure it contains all the necessary
+*	consumer threads. 
+*/
 int main(int argc, char* argv[])
 {
 	if(argc!= 4){
@@ -359,7 +372,12 @@ int main(int argc, char* argv[])
 		initializeQueue(queue_array[i-1], category);
 	}
 
-	if(queue_array == NULL) perror("The Queue Array seems to be null");
+	if(queue_array == NULL)
+	{ 
+		perror("The Queue Array seems to be null");
+		exit(0);
+	}
+
 
 	populateCustomerDatabase(customer_database);
 	int number_of_threads = sizeof(queue_array)/sizeof(queue*);
@@ -367,7 +385,7 @@ int main(int argc, char* argv[])
 	pthread_t thread[number_of_threads+1];
 
 	for(i = 0; i <= number_of_threads;i++){
-		if(i = 0){
+		if(i == 0){
 			pthread_create(&thread[i], NULL, producerThread, orders);
 		}
 		else{

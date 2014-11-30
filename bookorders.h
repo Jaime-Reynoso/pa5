@@ -28,6 +28,11 @@ struct customer{
 
 typedef struct customer customer;
 
+/*
+*	I created a separate struct that contains the customer id and the customer itself, this way i can use UTHASH
+*	to find the customer 
+*/
+
 typedef struct hash_cell{
 	int customer_ID;
 	customer cust;
@@ -35,7 +40,11 @@ typedef struct hash_cell{
 
 
 /*
-*	A queue contains the size of the queue, a link to the beginning and a link to the end Queue
+*	This queue can't be accessed by multiple threads, and it can't have more than a max amount of book orders
+*	or the thread will have too many book orders to handle, so I have 3 semaphores
+*	one to keep track of how many available slots there are, one to keep track of the items and one 
+*	to lock the queue when it's in use. The size is important because it's an int and the position of the 
+*	first and last item along with the book order that it contains. 
 */
 struct queue{
 	bookOrder* cat_orders;
@@ -62,43 +71,19 @@ struct bookOrder{
 	struct bookOrder *next;
 }
 typedef struct bookOrder bookOrder;
-/*
-*	This method initializes  the Queue by giving it a size of 0 and sets both the nodes equal to NULL
-*/
-queue* initializeQueue(char * category);
 
-/*
-*	This is a method to initialize a bookOrder Struct
-*/
-void initializeBookStruct(bookOrder* pointer);
 
-/*
-*	This method adds the books into the Queue
-*/
-queue* createQueue(FILE* order);
 
-/*
-*	This is the processor Thread method
-*/
-void readBookOrders(File *orders);
-
-/*
-*	This is going to be used to pop items from a queue
-*/
-void* pop(queue *queue);
-
-/*
-*	 This method inserts a new item into an already initialized Queue
-*/
-queue* insertItem(queue* queue, bookOrder* item);
-
-/*
-*	Determines whether the person has enough credit to purchase the book, and then decides what list to add the purchase
-*	to. The accepted purchase or the Rejected list.
-*/
-queue* insertOrder(customer* customer, bookOrder *newNode, int list);
-
-/*
-*	The Queue is on the heap, so in order to not have memory leaks freeQueue frees each individual node, then the Queue itself.
-*/ 	
-void freeQueue(queue* queue);
+void producerThread(File* something);
+void consumerThread(queue* queue);
+void initializeBookStruct(bookOrder *pointer);
+void consumerThread(queue* queue);
+void printFinalReport(File* finalDatabase);
+void initializeQueue(queue* temp_queue, char* category);
+void insertBookOrder(queue *order_cont, bookOrder book);
+bookOrder removeBookOrder(queue *temp_order);
+void populateCustomerDatabase(File *customer_database);
+void addCustomer(customer* customerI, int customerID);
+customer *findCustomer(int customerID);
+void delete_all();
+customer *findCustomer(int customerID);
