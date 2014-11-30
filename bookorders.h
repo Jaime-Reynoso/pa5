@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <semaphore.h>
 #include "uthash.h"
 #include <sys/stat.h>
-//M: -> mauricio comments
+#include <pthread.h>
+#include <stdbool.h>
 
-#DEFINE MAX 5
+#define MAX 5
 
 /*
 *	Customer Struct contains name, customer ID. balance, address, state. zip and a list of both purchased
@@ -20,9 +20,8 @@ struct customer{
 	char* city;
 	char* state;
 	char* zip;
-	bookOrder* success_order;
-	bookOrder* fail_order;
-	UT_Hash_Handle hh;
+	struct bookOrder* success_order;
+	struct bookOrder* fail_order;
 	sem_t mutex;
 };
 
@@ -35,7 +34,8 @@ typedef struct customer customer;
 
 typedef struct hash_cell{
 	int customer_ID;
-	customer cust;
+	customer *cust;
+	UT_hash_handle hh;
 }hash_cell;
 
 
@@ -47,7 +47,7 @@ typedef struct hash_cell{
 *	first and last item along with the book order that it contains. 
 */
 struct queue{
-	bookOrder* cat_orders;
+	struct bookOrder** cat_orders;
 	char *category;
 	int size;
 	int position_of_last_item;
@@ -67,23 +67,24 @@ struct bookOrder{
 	float price;
 	int customer_ID;
 	char *category;
-	int remaining_Balance;
+	float remaining_Balance;
 	struct bookOrder *next;
-}
+};
 typedef struct bookOrder bookOrder;
 
 
 
-void producerThread(File* something);
+void producerThread(FILE* something);
 void consumerThread(queue* queue);
 void initializeBookStruct(bookOrder *pointer);
 void consumerThread(queue* queue);
-void printFinalReport(File* finalDatabase);
+void printFinalReport(FILE* finalDatabase);
 void initializeQueue(queue* temp_queue, char* category);
-void insertBookOrder(queue *order_cont, bookOrder book);
-bookOrder removeBookOrder(queue *temp_order);
-void populateCustomerDatabase(File *customer_database);
+void insertBookOrder(queue *order_cont, bookOrder *book);
+bookOrder* removeBookOrder(queue *temp_order);
+void populateCustomerDatabase(FILE* customer_database);
 void addCustomer(customer* customerI, int customerID);
 customer *findCustomer(int customerID);
 void delete_all();
 customer *findCustomer(int customerID);
+void freeCustomerBookOrder(bookOrder* order);

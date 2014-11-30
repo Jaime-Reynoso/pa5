@@ -1,10 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+
 #include "bookorders.h"
-#include <semaphore.h>
-#include <pthread.h>
 
 queue **queue_array;
 hash_cell *customer_database;
@@ -13,7 +8,7 @@ hash_cell *customer_database;
 *	This is the function for the producer thread
 */
 
-void producerThread(File *orders)
+void producerThread(FILE *orders)
 {
 
 	printf("Processor Thread has begun processing\n");
@@ -91,6 +86,7 @@ void producerThread(File *orders)
 	}
 
 }
+}
 
 
 /*
@@ -160,7 +156,7 @@ void consumerThread(queue* queue)
 *	This is a function that will take the file that is supposed to contain the finalReport and then iterates
 *	through each customer to find out which book orders were possible and which book orders were not possible. 
 */
-void printFinalReport(File* finalDatabase)
+void printFinalReport(FILE* finalDatabase)
 {
 	int i;
 	customer* traversal_customer;
@@ -200,24 +196,24 @@ void printFinalReport(File* finalDatabase)
 */
 void initializeQueue(queue* temp_queue, char* category)
 {
-	temp_queue->cat_orders = calloc(MAX, sizeof(bookOrder));
+	temp_queue->cat_orders = calloc(MAX, sizeof(bookOrder*));
 	temp_queue->category = calloc(strlen(category), sizeof(char));
 	strncpy(temp_queue->category ,category,strlen(category)); 
-	temp->size = MAX;
-	temp->position_of_last_item = temp->position_of_first_item = 0;
-	Sem_init(&temp_queue->mutex, 0, 1);
-	Sem_init(&temp_queue->slots, 0, MAX);
-	Sem_init(&temp_queue->items, 0, 0);
+	temp_queue->size = MAX;
+	temp_queue->position_of_last_item = temp_queue->position_of_first_item = 0;
+	sem_init(&temp_queue->mutex, 0, 1);
+	sem_init(&temp_queue->slots, 0, MAX);
+	sem_init(&temp_queue->items, 0, 0);
 }
 
 /*
 *	This will insert a book node into the designated queue
 */
 
-void insertBookOrder(queue *order_cont, bookOrder book){
+void insertBookOrder(queue *order_cont, bookOrder *book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
-	order_cont->buffer[(++order_cont->position_of_last_item)%(order_cont->size)] = book;
+	order_cont->cat_orders[(++order_cont->position_of_last_item)%(order_cont->size)] = book;
 	sem_post(&order_cont->mutex);
 	sem_post(&order_cont->items);
 }
@@ -226,8 +222,8 @@ void insertBookOrder(queue *order_cont, bookOrder book){
 *	This will retrieve a book from a designated queue
 */
 
-bookOrder removeBookOrder(queue *temp_order){
-	bookOrder item;
+bookOrder *removeBookOrder(queue *temp_order){
+	bookOrder *item;
 	sem_wait(&temp_order->items);
 	sem_wait(&temp_order->mutex);
 	item = temp_order->cat_orders[(++temp_order->position_of_first_item)%(temp_order->size)];
@@ -241,7 +237,7 @@ bookOrder removeBookOrder(queue *temp_order){
 * the customers, use a token to tokenize the customer information into different customers, then I 
 *use addCustomer to create a hash_cell, which is how im going to search for the individual customers. 
 */
-void populateCustomerDatabase(File *customer_database){
+void populateCustomerDatabase(FILE *customer_database){
 
 	char customer_temp[256];
 	customer *individual_customer;
@@ -306,7 +302,7 @@ void addCustomer(customer* customerI, int customerID){
 
 		temp = malloc(sizeof(hash_cell));
 		temp->customer_ID = customerID;
-		HASH_ADD_INT(customer_database, id, temp);
+		HASH_ADD_INT(customer_database, customer_ID, temp);
 	}
 
 	temp->cust = customerI;
@@ -321,9 +317,19 @@ void delete_all() {
 
   HASH_ITER(hh, customer_database, current_user, tmp) {
     HASH_DEL(customer_database,current_user);  /* delete it (users advances to next) */
+    freeCustomerBookOrder(current_user->cust->success_order);
+    freeCustomerBookOrder(current_user->cust->fail_order);
     free(current_user->cust); 
     free(current_user);           /* free it */
   }
+}
+
+void freeCustomerBookOrder(bookOrder* order){
+	if(order == NULL) return;
+	else{
+		freeCustomerBookOrder(order->next);
+	}
+	free(order);
 }
 
 /*
@@ -353,24 +359,30 @@ int main(int argc, char* argv[])
 		printf("Correct Arguments: ./bookorders [arg1] [arg2] [arg3]\n");
 		printf("Arg1- The name of the database input file \nArg2 - The name of the book order input file\n");
 		printf("Arg3 - The name of the category input file\n");
-		exit();
+		exit(0);
 	}
 
-	if((File *categories = fopen(argv[3], "r")) == NULL) perror("Couldn't open the category file");
-	if((File *orders = fopen(argv[2], "r")) == NULL) perror("Couldn't open the order");
-	if((File *customer_database = fopen(argv[1], "r"))==NULL) perror("Couldn't open database");
-	if((File *finalReport = fopen(finalReport.txt, "+w")) == NULL) perror("Couldn't create the final report");
+	FILE *categories = fopen(argv[3], "r");
+	FILE *orders = fopen(argv[2], "r");
+	FILE *customer_database = fopen(argv[1], "r");
+	FILE *finalReport = fopen("finalReport.txt", "w+");
+
+	if(categories  == NULL) perror("Couldn't open the category file");
+	if(orders == NULL) perror("Couldn't open the order");
+	if(customer_database == NULL) perror("Couldn't open database");
+	if(finalReport == NULL) perror("Couldn't create the final report");
 
 	queue_array = malloc(sizeof(queue*));
 
 	char category[64];
 	int i;
 	for(i = 1 ; !feof(categories) ; i++){
-
-		queue_array = (queue **) realloc(sizeof(queue*)*i);
+		printf("Creating the categories");
+		realloc(queue_array, sizeof(queue*)*i);
 		fgets(category, 64, categories);
 		initializeQueue(queue_array[i-1], category);
 	}
+	printf("Created the category");
 
 	if(queue_array == NULL)
 	{ 
