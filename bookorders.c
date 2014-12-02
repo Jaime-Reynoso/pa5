@@ -46,7 +46,7 @@ void producerThread(FILE *orders)
 			*	The best way to separate each separate field of the book order was by using a counter.
 			*/
 			counter = 1;
-			while(token != NULL && strlen(token >= 1))
+			while(token != NULL && strlen(token) >= 1)
 			{
 				switch(counter)
 				{
@@ -81,7 +81,7 @@ void producerThread(FILE *orders)
 			int count_cat;
 			for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
 			{
-				if(strcmp(queue_array[count_cat]->category, temp->category) == 0 && counter = 4)
+				if(strcmp(queue_array[count_cat]->category, temp->category) == 0 && counter == 4)
 				{
 					insertBookOrder(queue_array[count_cat], temp);
 					break;
