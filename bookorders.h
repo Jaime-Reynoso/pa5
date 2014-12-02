@@ -85,5 +85,6 @@ bookOrder* removeBookOrder(queue *temp_order);
 void populateCustomerDatabase(FILE* customer_database);
 void addCustomer(customer* customerI, int customerID);
 hash_cell *findCustomer(int customerID);
+customer *findCustomerFinal(int customerID);
 void delete_all();
 void freeCustomerBookOrder(bookOrder* order);
