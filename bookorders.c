@@ -41,31 +41,28 @@ void producerThread(FILE *orders)
 			fgets(order_temp, 256, orders);
 			token = strtok(order_temp, token_delim);
 			temp = (bookOrder*) malloc(sizeof(bookOrder));
+			initializeBookStruct(temp);
 
 			/*
 			*	The best way to separate each separate field of the book order was by using a counter.
 			*/
-			
+			counter = 1;
 			while(token != NULL && strlen(token) >= 1)
 			{
-				counter = 1;
+				counter++;
 				switch(counter)
 				{
 					case 1:
-						counter++;
 						temp->title = malloc(sizeof(char)*strlen(token));
 						strcpy(temp -> title, token);
 						break;
 					case 2:
-						counter++;
 						temp -> price = atof(token);
 						break;
 					case 3:
-						counter++;
 						temp -> customer_ID = atoll(token);
 						break;
 					case 4:
-						counter++;
 						temp->category = malloc(sizeof(char)*strlen(token));
 						strcpy(temp -> category, token);
 						break;
@@ -79,14 +76,20 @@ void producerThread(FILE *orders)
 			/*
 			*	After I get the book order node, i use a for loop to find the right queue, then i insert the queue
 			*/
-			int count_cat;
-			for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
-			{
-				if(strcmp(queue_array[count_cat]->category, temp->category) == 0 && counter == 4)
+			if(temp->title != NULL &&temp->price != 0 && temp->category != NULL && temp->customer_ID != 0){
+				int count_cat;
+				for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
 				{
-					insertBookOrder(queue_array[count_cat], temp);
-					break;
+					if(strcmp(queue_array[count_cat]->category, temp->category) == 0 )
+					{
+						insertBookOrder(queue_array[count_cat], temp);
+						break;
+					}
 				}
+			} else{
+				free(temp->title);
+				free(temp->category);
+				free(temp);
 			}
 
 	}
