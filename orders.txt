@@ -27,4 +27,3 @@
 "The Outpost: An Untold Story of American Valor"|12.99|4|POLITICS01
 "Hockey; The Math of the Game (Sports Illustrated Kids: Sports Math)"|7.95|3|SPORTS01
 "Outliers: The Story of Success"|9.83|1|POLITICS01
-"Tasting Beer: An Insider's Guide to the World's Greatest Drink"|11.31|5|HOUSING01
