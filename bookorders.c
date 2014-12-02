@@ -170,8 +170,10 @@ void printFinalReport(FILE* finalDatabase)
 	bookOrder* traversal_order;
 	float totalRevenueProduced = 0;
 
-	for(i = 1; findCustomer(i) != NULL; i++){
-		traversal_customer = findCustomer(i);
+	for(i = 1; findCustomerFinal(i) != NULL; i++){
+		traversal_customer= findCustomerFinal(i);
+
+
 		fputs("== BEGIN CUSTOMER INFO ==\n", finalDatabase);
 		fputs("### BALANCE ###\n", finalDatabase);
 		fprintf(finalDatabase, "Customer Name: %s \n", traversal_customer->name);
@@ -367,6 +369,17 @@ hash_cell *findCustomer(int customerID)
 	return tmp;
 }
 
+/*
+*	The final report is not a thread, but it still needs access to the customer, so i built a function to solve the problem
+*/
+customer *findCustomerFinal(int customerID)
+{
+	hash_cell *tmp;
+
+	HASH_FIND_INT(customer_database, &customerID, tmp);
+
+	return tmp->cust;
+}
 /*
 *	This main function is simple, it takes in arguments, makes sure that the arguments are correct, then it
 *	attempts to open the file necessary. 
