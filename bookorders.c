@@ -395,6 +395,7 @@ int main(int argc, char* argv[])
 	int i;
 	char *token;
 	int ch;
+	number_of_categories = 1;
 	 do
     {
    	ch = fgetc(categories);
