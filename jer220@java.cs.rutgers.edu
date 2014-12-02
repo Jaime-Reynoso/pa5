@@ -125,9 +125,7 @@ void consumerThread(queue* queue)
 		*	so each customer has a semaphore, which protects the customer from being accessed by multiple
 		* 	threads.
 		*/
-		sem_wait(&customer_database->mutex);
-		temp_customer = findCustomer(tempOrder->customer_ID);
-		sem_post(&customer_database->mutex);
+		temp_customer = exclusivelyDealWithCustomer(tempOrder->customer_ID);
 		
 
 		/*
@@ -135,28 +133,25 @@ void consumerThread(queue* queue)
 		*/
 		if(temp_customer->balance >= tempOrder->price){
 
-			sem_wait(&customer_database->mutex);
-			temp_customer->balance -= tempOrder->price;
+			temp_customer->balance = temp_customer->balance - tempOrder->price;
+
 			tempOrder->remaining_Balance = temp_customer->balance;
 			traversal_order = temp_customer->success_order;
 			while(traversal_order != NULL){
 				traversal_order = traversal_order->next;
 			}
 			traversal_order = tempOrder;
-			sem_post(&customer_database->mutex);
-
 		}
 		else{
-			sem_wait(&customer_database->mutex);
 			traversal_order = temp_customer->fail_order;
 			while(traversal_order != NULL){
 				traversal_order = traversal_order->next;
 			}
 			traversal_order = tempOrder;
-			sem_post(&customer_database->mutex);
 		}
 		
 		tempOrder = removeBookOrder(queue);
+		doneWithCustomer(temp_customer);
 	}
 	
 }
@@ -298,6 +293,7 @@ void populateCustomerDatabase(FILE *customer_database){
 			token = strtok(NULL, customer_delim);
 		}
 
+		sem_init(&individual_customer->mutex, 0, 1);
 		individual_customer->success_order = NULL;
 		individual_customer->fail_order = NULL;
 
@@ -364,7 +360,27 @@ customer *findCustomer(int customerID)
 
 	HASH_FIND_INT(customer_database, &customerID, tmp);
 
+	sem_wait(&tmp->cust->mutex);
+
 	return tmp->cust;
+}
+/*
+*	This is a function to help synchronize the customer
+*/
+
+customer *exclusivelyDealWithCustomer(int customer_ID){
+	customer* custom;
+	custom = findCustomer(customer_ID);
+	sem_wait(&custom->mutex);
+	return custom;
+}
+
+
+/*
+*	This is a function to help synchronize the customer
+*/
+void doneWithCustomer(customer * custom){
+	sem_post(&custom->mutex);
 }
 
 /*

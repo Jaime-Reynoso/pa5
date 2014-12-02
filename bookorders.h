@@ -22,7 +22,6 @@ struct customer{
 	char* zip;
 	struct bookOrder* success_order;
 	struct bookOrder* fail_order;
-	sem_t mutex;
 };
 
 typedef struct customer customer;
@@ -36,6 +35,7 @@ typedef struct hash_cell{
 	int customer_ID;
 	customer *cust;
 	UT_hash_handle hh;
+	sem_t mutex;
 }hash_cell;
 
 
@@ -88,3 +88,5 @@ customer *findCustomer(int customerID);
 void delete_all();
 customer *findCustomer(int customerID);
 void freeCustomerBookOrder(bookOrder* order);
+customer *exclusivelyDealWithCustomer(int customer_ID);
+void doneWithCustomer(customer * custom);
