@@ -15,7 +15,7 @@ void producerThread(FILE *orders)
 	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
 	bookOrder *temp = NULL;
-	char token_delim[] = "\"|\n";
+	char token_delim[] = "|\n";
 	char* token;
 	int counter;
 
@@ -47,7 +47,7 @@ void producerThread(FILE *orders)
 			*	The best way to separate each separate field of the book order was by using a counter.
 			*/
 			counter = 1;
-			while(token != NULL && strlen(token) >= 1)
+			while(token != NULL)
 			{
 				counter++;
 				switch(counter)
