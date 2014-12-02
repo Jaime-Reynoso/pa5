@@ -45,23 +45,26 @@ void producerThread(FILE *orders)
 			/*
 			*	The best way to separate each separate field of the book order was by using a counter.
 			*/
-			counter = 0;
-			while(token != NULL)
+			counter = 1;
+			while(token != NULL && strlen(token >= 1))
 			{
-				counter++;
 				switch(counter)
 				{
 					case 1:
+						counter++;
 						temp->title = malloc(sizeof(char)*strlen(token));
 						strcpy(temp -> title, token);
 						break;
 					case 2:
+						counter++;
 						temp -> price = atof(token);
 						break;
 					case 3:
+						counter++;
 						temp -> customer_ID = atoll(token);
 						break;
 					case 4:
+						counter++;
 						temp->category = malloc(sizeof(char)*strlen(token));
 						strcpy(temp -> category, token);
 						break;
@@ -78,7 +81,7 @@ void producerThread(FILE *orders)
 			int count_cat;
 			for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
 			{
-				if(strcmp(queue_array[count_cat]->category, temp->category) == 0)
+				if(strcmp(queue_array[count_cat]->category, temp->category) == 0 && counter = 4)
 				{
 					insertBookOrder(queue_array[count_cat], temp);
 					break;
