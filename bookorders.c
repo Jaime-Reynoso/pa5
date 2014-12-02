@@ -45,9 +45,10 @@ void producerThread(FILE *orders)
 			/*
 			*	The best way to separate each separate field of the book order was by using a counter.
 			*/
-			counter = 1;
+			
 			while(token != NULL && strlen(token) >= 1)
 			{
+				counter = 1;
 				switch(counter)
 				{
 					case 1:
