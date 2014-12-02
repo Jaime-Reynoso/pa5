@@ -84,9 +84,6 @@ void insertBookOrder(queue *order_cont, bookOrder *book);
 bookOrder* removeBookOrder(queue *temp_order);
 void populateCustomerDatabase(FILE* customer_database);
 void addCustomer(customer* customerI, int customerID);
-customer *findCustomer(int customerID);
-void delete_all();
-customer *findCustomer(int customerID);
+hash_cell *findCustomer(int customerID);
+void delete_all();\
 void freeCustomerBookOrder(bookOrder* order);
-customer *exclusivelyDealWithCustomer(int customer_ID);
-void doneWithCustomer(customer * custom);

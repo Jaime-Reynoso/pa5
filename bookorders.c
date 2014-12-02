@@ -111,7 +111,7 @@ void initializeBookStruct(bookOrder *pointer){
 void consumerThread(queue* queue)
 {
 
-	customer *temp_customer = NULL;
+	hash_cell *temp_customer = NULL;
 	bookOrder *tempOrder = removeBookOrder(queue);
 	bookOrder *traversal_order = NULL;
 
@@ -125,35 +125,30 @@ void consumerThread(queue* queue)
 		*	so each customer has a semaphore, which protects the customer from being accessed by multiple
 		* 	threads.
 		*/
-		sem_wait(&customer_database->mutex);
+
 		temp_customer = findCustomer(tempOrder->customer_ID);
-		sem_post(&customer_database->mutex);
-		
+		sem_post(&temp_customer->mutex);
 
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
 		*/
-		if(temp_customer->balance >= tempOrder->price){
+		if(temp_customer->cust->balance >= tempOrder->price){
 
-			sem_wait(&customer_database->mutex);
-			temp_customer->balance -= tempOrder->price;
-			tempOrder->remaining_Balance = temp_customer->balance;
-			traversal_order = temp_customer->success_order;
+			temp_customer->cust->balance -= tempOrder->price;
+			tempOrder->remaining_Balance = temp_customer->cust->balance;
+			traversal_order = temp_customer->cust->success_order;
 			while(traversal_order != NULL){
 				traversal_order = traversal_order->next;
 			}
 			traversal_order = tempOrder;
-			sem_post(&customer_database->mutex);
 
 		}
 		else{
-			sem_wait(&customer_database->mutex);
-			traversal_order = temp_customer->fail_order;
+			traversal_order = temp_customer->cust->fail_order;
 			while(traversal_order != NULL){
 				traversal_order = traversal_order->next;
 			}
 			traversal_order = tempOrder;
-			sem_post(&customer_database->mutex);
 		}
 		
 		tempOrder = removeBookOrder(queue);
@@ -317,6 +312,7 @@ void addCustomer(customer* customerI, int customerID){
 
 		temp = malloc(sizeof(hash_cell));
 		temp->customer_ID = customerID;
+		sem_init(&temp->mutex, 0, 1);
 		HASH_ADD_INT(customer_database, customer_ID, temp);
 	}
 
@@ -358,13 +354,14 @@ void freeCustomerBookOrder(bookOrder* order){
 *	This function is going to take in the customer id (the book order will have it), and it's going to use the 
 *	UTHASH functions to retrieve the hash cell that contains the customer, then it returns the customer
 */
-customer *findCustomer(int customerID)
+hash_cell *findCustomer(int customerID)
 {
 	hash_cell *tmp;
 
 	HASH_FIND_INT(customer_database, &customerID, tmp);
 
-	return tmp->cust;
+	sem_wait(&tmp->mutex);
+	return tmp;
 }
 
 /*
