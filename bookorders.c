@@ -210,6 +210,9 @@ void printFinalReport(FILE* finalDatabase)
 void initializeQueue(queue* temp_queue, char* category)
 {
 	temp_queue->cat_orders = malloc(sizeof(bookOrder *) * MAX);
+	for(int i = 0; i < MAX; i++){
+		temp_queue->cat_orders[i] = malloc(sizeof(bookOrder));
+	}
 	temp_queue->category = calloc(strlen(category), sizeof(char));
 	strncpy(temp_queue->category ,category,strlen(category)); 
 	temp_queue->size = MAX;
