@@ -457,10 +457,10 @@ int main(int argc, char* argv[])
 
 	for(i = 0; i <= number_of_categories;i++){
 		if(i == 0){
-			pthread_create(&thread[i], NULL,producerThread, (void *)orders);
+			pthread_create(&thread[i], NULL,(void *)producerThread, (void *)orders);
 		}
 		else{
-			pthread_create(&thread[i], NULL,consumerThread, (void *)queue_array[i-1]);
+			pthread_create(&thread[i], NULL,(void *)consumerThread, (void *)queue_array[i-1]);
 		}
 	}
 	for(i = 0;i <= number_of_categories; i++){
