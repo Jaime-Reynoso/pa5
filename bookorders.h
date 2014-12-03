@@ -80,7 +80,7 @@ void initializeBookStruct(bookOrder *pointer);
 void consumerThread(queue* queue);
 void printFinalReport(FILE* finalDatabase);
 void initializeQueue(queue* temp_queue, char* category);
-void insertBookOrder(queue *order_cont, bookOrder *book);
+void insertBookOrder(queue *order_cont, bookOrder **book);
 bookOrder* removeBookOrder(queue *temp_order);
 void populateCustomerDatabase(FILE* customer_database);
 void addCustomer(customer* customerI, int customerID);

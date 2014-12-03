@@ -37,6 +37,7 @@ void producerThread(FILE *orders)
 		*/
 
 		while(!feof(orders)){
+			temp = malloc(sizeof(customer));
 			/*
 			*	After getting the line, im going to use tokenizer to tokenize the line into useful information
 			* 	on the book order
@@ -84,15 +85,12 @@ void producerThread(FILE *orders)
 				{
 					if(strcmp(queue_array[count_cat]->category, temp->category) == 0 )
 					{
-						insertBookOrder(queue_array[count_cat], temp);
+						insertBookOrder(queue_array[count_cat], &temp);
 						break;
 					}
 				}
 			}
 		}
-		free(temp->title);
-		free(temp->category); 
-		free(temp);
 	}
 }
 
@@ -135,13 +133,13 @@ void consumerThread(queue* queue)
 		*/
 
 		temp_customer = findCustomer(tempOrder->customer_ID);
-
+		sem_post(&temp_customer->mutex);
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
 		*/
 		if(temp_customer->cust->balance >= tempOrder->price){
 
-			temp_customer->cust->balance -= tempOrder->price;
+			temp_customer->cust->balance = temp_customer->cust->balance - tempOrder->price;
 			tempOrder->remaining_Balance = temp_customer->cust->balance;
 			tempOrder->next = temp_customer->cust->success_order;
 			temp_customer->cust->success_order = tempOrder;
@@ -151,7 +149,6 @@ void consumerThread(queue* queue)
 			tempOrder->next = temp_customer->cust->fail_order;
 			temp_customer->cust->fail_order = tempOrder;
 		}
-		sem_post(&temp_customer->mutex);
 		
 		if(queue->position_of_last_item != queue->position_of_first_item){
 			tempOrder = removeBookOrder(queue);
@@ -224,20 +221,11 @@ void initializeQueue(queue* temp_queue, char* category)
 *	This will insert a book node into the designated queue
 */
 
-void insertBookOrder(queue *order_cont, bookOrder *book){
-	bookOrder *item;
+void insertBookOrder(queue *order_cont, bookOrder **book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
 	order_cont->position_of_last_item++;
-	item = order_cont->cat_orders[((order_cont->position_of_last_item) %(order_cont->size))];
-	item->title = malloc(sizeof(char)*strlen(book->title));
-	strcpy(item -> title, book->title);
-	item->price = book->price;
-	item->category = malloc(sizeof(char)*strlen(book->category));
-	strcpy(item->category, book->category);
-	item->customer_ID = book->customer_ID;
-	item->remaining_Balance = 0;
-	item->next = NULL;
+	order_cont->cat_orders[((order_cont->position_of_last_item) %(order_cont->size))] = *book;
 	sem_post(&order_cont->mutex);
 	sem_post(&order_cont->items);
 }
@@ -407,7 +395,7 @@ int main(int argc, char* argv[])
 {
 	if(argc!= 4){
 		printf("Error: Incorrect Input \n");
-		printf("Correct Arguments: ./bookorders [arg1] [arg2] [arg3]\n");
+		printf("Correct Arguments: ./books [arg1] [arg2] [arg3]\n");
 		printf("Arg1- The name of the database input file \nArg2 - The name of the book order input file\n");
 		printf("Arg3 - The name of the category input file\n");
 		exit(0);
