@@ -134,7 +134,7 @@ void consumerThread(queue* queue)
 		* 	threads.
 		*/
 
-		temp_customer = findCustomer((*tempOrder)->customer_ID);
+		temp_customer = findCustomer(tempOrder->customer_ID);
 
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
