@@ -119,7 +119,9 @@ void consumerThread(queue* queue)
 
 	hash_cell *temp_customer = NULL;
 	bookOrder *tempOrder = NULL;
-	bookOrder *tempOrder = removeBookOrder(queue);
+	if(queue->position_of_last_item != queue->position_of_first_item){
+		tempOrder = removeBookOrder(queue);
+	}
 	bookOrder *traversal_order = NULL;
 
 	/*
@@ -157,9 +159,9 @@ void consumerThread(queue* queue)
 			traversal_order = tempOrder;
 		}
 		sem_post(&temp_customer->mutex);
-		tempOrder = NULL;
+		
 		if(queue->position_of_last_item != queue->position_of_first_item){
-			bookOrder *tempOrder = removeBookOrder(queue);
+			tempOrder = removeBookOrder(queue);
 		}
 	}
 	
