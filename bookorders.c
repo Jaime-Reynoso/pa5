@@ -10,10 +10,9 @@ char *last_name;
 *	This is the function for the producer thread
 */
 
-void producerThread(FILE *orders)
+void *producerThread(FILE *orders)
 {
 
-	pthread_detach(pthread_self());
 	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
 	bookOrder *temp = NULL;
@@ -96,6 +95,7 @@ void producerThread(FILE *orders)
 
 		producerDone = 1;
 	}
+	return NULL;
 
 }
 
@@ -117,7 +117,7 @@ void initializeBookStruct(bookOrder *pointer){
 * then it takes the book orders and processes them, so the only input you need are the bookOrders.
 */
 
-void consumerThread(queue* queue)
+void *consumerThread(queue* queue)
 {
 	pthread_detach(pthread_self());
 	hash_cell *temp_customer = NULL;
@@ -158,6 +158,7 @@ void consumerThread(queue* queue)
 			tempOrder = removeBookOrder(queue);
 		}
 	}
+	return NULL;
 	
 }
 

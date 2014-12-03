@@ -74,10 +74,9 @@ typedef struct bookOrder bookOrder;
 
 
 
-void producerThread(FILE* something);
-void consumerThread(queue* queue);
+void *producerThread(FILE* something);
+void *consumerThread(queue* queue);
 void initializeBookStruct(bookOrder *pointer);
-void consumerThread(queue* queue);
 void printFinalReport(FILE* finalDatabase);
 void initializeQueue(queue* temp_queue, char* category);
 void insertBookOrder(queue *order_cont, bookOrder **book);
