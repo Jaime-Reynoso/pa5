@@ -94,6 +94,7 @@ void *producerThread(FILE *orders)
 
 		producerDone = 1;
 	}
+	pthread_exit(pthread_self());
 	return NULL;
 
 }
