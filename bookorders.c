@@ -118,9 +118,9 @@ void consumerThread(queue* queue)
 {
 
 	hash_cell *temp_customer = NULL;
-	bookOrder **tempOrder = NULL;
+	bookOrder *tempOrder = NULL;
 	if(queue->position_of_last_item != queue->position_of_first_item){
-		*tempOrder = removeBookOrder(queue);
+		tempOrder = removeBookOrder(queue);
 	}
 
 	/*
@@ -139,22 +139,22 @@ void consumerThread(queue* queue)
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
 		*/
-		if(temp_customer->cust->balance >= (*tempOrder)->price){
+		if(temp_customer->cust->balance >= tempOrder->price){
 
-			temp_customer->cust->balance -= (*tempOrder)->price;
-			(*tempOrder)->remaining_Balance = temp_customer->cust->balance;
-			(*tempOrder)->next = temp_customer->cust->success_order;
-			temp_customer->cust->success_order = *tempOrder;
+			temp_customer->cust->balance -= tempOrder->price;
+			tempOrder->remaining_Balance = temp_customer->cust->balance;
+			tempOrder->next = temp_customer->cust->success_order;
+			temp_customer->cust->success_order = tempOrder;
 
 		}
 		else{
-			(*tempOrder)->next = temp_customer->cust->fail_order;
-			temp_customer->cust->fail_order = (*tempOrder);
+			tempOrder->next = temp_customer->cust->fail_order;
+			temp_customer->cust->fail_order = tempOrder;
 		}
 		sem_post(&temp_customer->mutex);
 		
 		if(queue->position_of_last_item != queue->position_of_first_item){
-			*tempOrder = removeBookOrder(queue);
+			tempOrder = removeBookOrder(queue);
 		}
 	}
 	
