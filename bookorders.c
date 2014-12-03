@@ -91,7 +91,10 @@ void *producerThread(FILE *orders)
 				}
 			}
 		}
-
+		int count_cat;
+		for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
+		{
+			semqueue_array[i]
 		producerDone = 1;
 	}
 	pthread_exit(pthread_self());
@@ -155,6 +158,9 @@ void *consumerThread(queue* queue)
 			tempOrder = NULL;
 		}else{
 			tempOrder = removeBookOrder(queue);
+			sem_destroy(&queue->items);
+			sem_destroy(&queue->slots);
+			sem_destroy(&queue->mutex);
 		}
 	}
 
