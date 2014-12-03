@@ -148,7 +148,6 @@ void consumerThread(queue* queue)
 			while(traversal_order != NULL){
 				traversal_order = traversal_order->next;
 			}
-			traversal_order = tempOrder;
 
 		}
 		else{
@@ -156,8 +155,9 @@ void consumerThread(queue* queue)
 			while(traversal_order != NULL){
 				traversal_order = traversal_order->next;
 			}
-			traversal_order = tempOrder;
 		}
+		traversal_order = malloc(sizeof(bookOrder));
+		traversal_order = tempOrder;
 		sem_post(&temp_customer->mutex);
 		
 		if(queue->position_of_last_item != queue->position_of_first_item){
