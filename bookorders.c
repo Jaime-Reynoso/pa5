@@ -91,10 +91,6 @@ void *producerThread(FILE *orders)
 				}
 			}
 		}
-		int count_cat;
-		for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
-		{
-			semqueue_array[i]
 		producerDone = 1;
 	}
 	pthread_exit(pthread_self());
