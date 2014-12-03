@@ -119,9 +119,7 @@ void consumerThread(queue* queue)
 
 	hash_cell *temp_customer = NULL;
 	bookOrder *tempOrder = NULL;
-	if(queue->position_of_last_item != queue->position_of_first_item){
-		bookOrder *tempOrder = removeBookOrder(queue);
-	}
+	bookOrder *tempOrder = removeBookOrder(queue);
 	bookOrder *traversal_order = NULL;
 
 	/*
