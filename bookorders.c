@@ -27,6 +27,7 @@ void producerThread(FILE *orders)
 		perror("There was an error initializing the queues");
 	}
 	else{
+		temp = malloc(sizeof(customer));
 
 		/*
 		*	This first while loop is going to help me iterate over the line in the file, the line contains all of
@@ -88,9 +89,10 @@ void producerThread(FILE *orders)
 			}
 			free(temp->title);
 			free(temp->category); 
-	}
+		}
 
-}
+	}
+	free(temp);
 }
 
 
