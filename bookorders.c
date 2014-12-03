@@ -28,6 +28,8 @@ void producerThread(FILE *orders)
 	}
 	else{
 		temp = malloc(sizeof(customer));
+		temp->title = malloc(sizeof(char));
+		temp->category = malloc(sizeof(char));
 
 		/*
 		*	This first while loop is going to help me iterate over the line in the file, the line contains all of
@@ -53,7 +55,7 @@ void producerThread(FILE *orders)
 				switch(counter)
 				{
 					case 1:
-						temp->title = malloc(sizeof(char)*strlen(token));
+						temp->title = realloc(temp->title,sizeof(char)*strlen(token));
 						strcpy(temp -> title, token);
 						break;
 					case 2:
@@ -63,7 +65,7 @@ void producerThread(FILE *orders)
 						temp -> customer_ID = atoll(token);
 						break;
 					case 4:
-						temp->category = malloc(sizeof(char)*strlen(token));
+						temp->category = realloc(temp->category,sizeof(char)*strlen(token));
 						strcpy(temp -> category, token);
 						break;
 					default:
@@ -87,12 +89,11 @@ void producerThread(FILE *orders)
 					}
 				}
 			}
-			free(temp->title);
-			free(temp->category); 
 		}
-
+		free(temp->title);
+		free(temp->category); 
+		free(temp);
 	}
-	free(temp);
 }
 
 
@@ -230,7 +231,7 @@ void insertBookOrder(queue *order_cont, bookOrder *book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
 	order_cont->position_of_last_item++;
-	item = order_cont->cat_orders[order_cont->position_of_last_item%(order_cont->size)];
+	item = order_cont->cat_orders[((order_cont->position_of_last_item) %(order_cont->size))];
 	item->title = malloc(sizeof(char)*strlen(book->title));
 	strcpy(item -> title, book->title);
 	item->price = book->price;
