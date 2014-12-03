@@ -118,7 +118,10 @@ void consumerThread(queue* queue)
 {
 
 	hash_cell *temp_customer = NULL;
-	bookOrder *tempOrder = removeBookOrder(queue);
+	bookOrder *tempOrder = NULL;
+	if(queue->position_of_last_item != queue->position_of_first_item){
+		bookOrder *tempOrder = removeBookOrder(queue);
+	}
 	bookOrder *traversal_order = NULL;
 
 	/*
@@ -133,7 +136,6 @@ void consumerThread(queue* queue)
 		*/
 
 		temp_customer = findCustomer(tempOrder->customer_ID);
-		sem_post(&temp_customer->mutex);
 
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
@@ -156,8 +158,11 @@ void consumerThread(queue* queue)
 			}
 			traversal_order = tempOrder;
 		}
-		
-		tempOrder = removeBookOrder(queue);
+		sem_post(&temp_customer->mutex);
+		tempOrder = NULL;
+		if(queue->position_of_last_item != queue->position_of_first_item){
+			bookOrder *tempOrder = removeBookOrder(queue);
+		}
 	}
 	
 }
