@@ -12,7 +12,6 @@ char *last_name;
 
 void *producerThread(FILE *orders)
 {
-
 	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
 	bookOrder *temp = NULL;
@@ -21,7 +20,7 @@ void *producerThread(FILE *orders)
 	int counter;
 
 	/*
-	*	The producer thread is going to populate the queue array, so I'm going to double check whether or not the
+	*	The producer thread is going to populate the  array, so I'm going to double check whether or not the
 	*	the queue array has been initialized.
 	*/
 	if(queue_array == NULL){
@@ -119,7 +118,6 @@ void initializeBookStruct(bookOrder *pointer){
 
 void *consumerThread(queue* queue)
 {
-	pthread_detach(pthread_self());
 	hash_cell *temp_customer = NULL;
 	bookOrder *tempOrder = NULL;
 		tempOrder = removeBookOrder(queue);
@@ -158,6 +156,7 @@ void *consumerThread(queue* queue)
 			tempOrder = removeBookOrder(queue);
 		}
 	}
+
 	return NULL;
 	
 }
@@ -206,6 +205,14 @@ void printFinalReport(FILE* finalDatabase)
 /*
 *	This will initialize a queue 
 */
+
+
+
+
+
+
+
+
 void initializeQueue(queue* temp_queue, char* category)
 {
 	temp_queue->cat_orders = malloc(sizeof(bookOrder *) * MAX);
@@ -386,7 +393,7 @@ customer *findCustomerFinal(int customerID)
 	hash_cell *tmp;
 
 	HASH_FIND_INT(customer_database, &customerID, tmp);
-
+	sem_destroy(&tmp->mutex);
 	return tmp->cust;
 }
 /*
@@ -450,10 +457,10 @@ int main(int argc, char* argv[])
 
 	for(i = 0; i <= number_of_categories;i++){
 		if(i == 0){
-			pthread_create(&thread[i], NULL,(void*) producerThread, orders);
+			pthread_create(&thread[i], NULL,producerThread, (void *)orders);
 		}
 		else{
-			pthread_create(&thread[i], NULL,(void*) consumerThread, queue_array[i-1]);
+			pthread_create(&thread[i], NULL,consumerThread, (void *)queue_array[i-1]);
 		}
 	}
 	for(i = 0;i <= number_of_categories; i++){
@@ -465,6 +472,6 @@ int main(int argc, char* argv[])
 	fclose(orders);
 	fclose(categories);
 	fclose(customer_database);
+	pthread_exit(NULL);
 
-	return 0;
 }
