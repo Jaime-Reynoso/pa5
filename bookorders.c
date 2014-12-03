@@ -118,11 +118,10 @@ void consumerThread(queue* queue)
 {
 
 	hash_cell *temp_customer = NULL;
-	bookOrder *tempOrder = NULL;
+	bookOrder **tempOrder = NULL;
 	if(queue->position_of_last_item != queue->position_of_first_item){
-		tempOrder = removeBookOrder(queue);
+		*tempOrder = removeBookOrder(queue);
 	}
-	bookOrder *traversal_order = NULL;
 
 	/*
 	*	This first while loop will make sure the book order that you're trying to process isn't null. 
@@ -135,32 +134,27 @@ void consumerThread(queue* queue)
 		* 	threads.
 		*/
 
-		temp_customer = findCustomer(tempOrder->customer_ID);
+		temp_customer = findCustomer((*tempOrder)->customer_ID);
 
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
 		*/
-		if(temp_customer->cust->balance >= tempOrder->price){
+		if(temp_customer->cust->balance >= (*tempOrder)->price){
 
-			temp_customer->cust->balance -= tempOrder->price;
-			tempOrder->remaining_Balance = temp_customer->cust->balance;
-			traversal_order = temp_customer->cust->success_order;
-			while(traversal_order != NULL){
-				traversal_order = traversal_order->next;
-			}
+			temp_customer->cust->balance -= (*tempOrder)->price;
+			(*tempOrder)->remaining_Balance = temp_customer->cust->balance;
+			(*tempOrder)->next = temp_customer->cust->success_order;
+			temp_customer->cust->success_order = *tempOrder;
 
 		}
 		else{
-			traversal_order = temp_customer->cust->fail_order;
-			while(traversal_order != NULL){
-				traversal_order = traversal_order->next;
-			}
+			(*tempOrder)->next = temp_customer->cust->fail_order;
+			temp_customer->cust->fail_order = (*tempOrder);
 		}
-		traversal_order = tempOrder;
 		sem_post(&temp_customer->mutex);
 		
 		if(queue->position_of_last_item != queue->position_of_first_item){
-			tempOrder = removeBookOrder(queue);
+			*tempOrder = removeBookOrder(queue);
 		}
 	}
 	
