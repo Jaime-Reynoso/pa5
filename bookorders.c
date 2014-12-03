@@ -3,7 +3,7 @@
 
 queue **queue_array = NULL;
 hash_cell *customer_database = NULL;
-int number_of_categories = 0;
+int number_of_categories = 0, producerDone = 0;
 char *last_name;
 
 /*
@@ -92,8 +92,8 @@ void producerThread(FILE *orders)
 				}
 			}
 		}
-		last_name = malloc(sizeof(char)*strlen(temp->title));
-		strcpy(last_name, temp->title);
+
+		producerDone = 1;
 	}
 
 }
@@ -151,11 +151,10 @@ void consumerThread(queue* queue)
 			temp_customer->cust->fail_order = tempOrder;
 		}
 		sem_post(&temp_customer->mutex);
-		if(queue->position_of_first_item != queue->position_of_first_item){
-			tempOrder = removeBookOrder(queue);
-		}
-		else{
+		if(queue->position_of_first_item == queue ->position_of_last_item && producerDone == 1){
 			tempOrder = NULL;
+		}else{
+		tempOrder = removeBookOrder(queue);
 		}
 	}
 	
