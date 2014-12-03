@@ -40,7 +40,6 @@ void producerThread(FILE *orders)
 			*/
 			fgets(order_temp, 256, orders);
 			token = strtok(order_temp, token_delim);
-			temp = (bookOrder*) malloc(sizeof(bookOrder));
 			initializeBookStruct(temp);
 
 			/*
@@ -86,12 +85,9 @@ void producerThread(FILE *orders)
 						break;
 					}
 				}
-			} else{
-				free(temp->title);
-				free(temp->category);
-				free(temp);
 			}
-
+			free(temp->title);
+			free(temp->category); 
 	}
 
 }
@@ -210,7 +206,8 @@ void printFinalReport(FILE* finalDatabase)
 void initializeQueue(queue* temp_queue, char* category)
 {
 	temp_queue->cat_orders = malloc(sizeof(bookOrder *) * MAX);
-	for(int i = 0; i < MAX; i++){
+	int i;
+	for(i = 0; i < MAX; i++){
 		temp_queue->cat_orders[i] = malloc(sizeof(bookOrder));
 	}
 	temp_queue->category = calloc(strlen(category), sizeof(char));
@@ -227,9 +224,19 @@ void initializeQueue(queue* temp_queue, char* category)
 */
 
 void insertBookOrder(queue *order_cont, bookOrder *book){
+	bookOrder *item;
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
-	order_cont->cat_orders[(++order_cont->position_of_last_item)%(order_cont->size)] = book;
+	order_cont->position_of_last_item++;
+	item = order_cont->cat_orders[order_cont->position_of_last_item%(order_cont->size)];
+	item->title = malloc(sizeof(char)*strlen(book->title));
+	strcpy(item -> title, book->title);
+	item->price = book->price;
+	item->category = malloc(sizeof(char)*strlen(book->category));
+	strcpy(item->category, book->category);
+	item->customer_ID = book->customer_ID;
+	item->remaining_Balance = 0;
+	item->next = NULL;
 	sem_post(&order_cont->mutex);
 	sem_post(&order_cont->items);
 }
@@ -242,7 +249,8 @@ bookOrder *removeBookOrder(queue *temp_order){
 	bookOrder *item;
 	sem_wait(&temp_order->items);
 	sem_wait(&temp_order->mutex);
-	item = temp_order->cat_orders[(++temp_order->position_of_first_item)%(temp_order->size)];
+	temp_order->position_of_first_item++;
+	item = temp_order->cat_orders[(temp_order->position_of_first_item)%(temp_order->size)];
 	sem_post(&temp_order->mutex);
 	sem_post(&temp_order->slots);
 	return item;
