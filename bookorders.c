@@ -46,7 +46,7 @@ void producerThread(FILE *orders)
 			/*
 			*	The best way to separate each separate field of the book order was by using a counter.
 			*/
-			counter = 1;
+			counter = 0;
 			while(token != NULL)
 			{
 				counter++;
