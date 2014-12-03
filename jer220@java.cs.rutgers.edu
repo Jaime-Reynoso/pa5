@@ -15,7 +15,7 @@ void producerThread(FILE *orders)
 	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
 	bookOrder *temp = NULL;
-	char token_delim[] = "\"|\n";
+	char token_delim[] = "|\n";
 	char* token;
 	int counter;
 
@@ -27,6 +27,9 @@ void producerThread(FILE *orders)
 		perror("There was an error initializing the queues");
 	}
 	else{
+		temp = malloc(sizeof(customer));
+		temp->title = malloc(sizeof(char));
+		temp->category = malloc(sizeof(char));
 
 		/*
 		*	This first while loop is going to help me iterate over the line in the file, the line contains all of
@@ -34,13 +37,14 @@ void producerThread(FILE *orders)
 		*/
 
 		while(!feof(orders)){
+			temp = malloc(sizeof(customer));
 			/*
 			*	After getting the line, im going to use tokenizer to tokenize the line into useful information
 			* 	on the book order
 			*/
 			fgets(order_temp, 256, orders);
 			token = strtok(order_temp, token_delim);
-			temp = (bookOrder*) malloc(sizeof(bookOrder));
+			initializeBookStruct(temp);
 
 			/*
 			*	The best way to separate each separate field of the book order was by using a counter.
@@ -52,7 +56,7 @@ void producerThread(FILE *orders)
 				switch(counter)
 				{
 					case 1:
-						temp->title = malloc(sizeof(char)*strlen(token));
+						temp->title = realloc(temp->title,sizeof(char)*strlen(token));
 						strcpy(temp -> title, token);
 						break;
 					case 2:
@@ -62,7 +66,7 @@ void producerThread(FILE *orders)
 						temp -> customer_ID = atoll(token);
 						break;
 					case 4:
-						temp->category = malloc(sizeof(char)*strlen(token));
+						temp->category = realloc(temp->category,sizeof(char)*strlen(token));
 						strcpy(temp -> category, token);
 						break;
 					default:
@@ -70,24 +74,24 @@ void producerThread(FILE *orders)
 				}
 				token = strtok(NULL, token_delim);
 			}
-			temp->next = NULL;
+			temp->next = malloc(sizeof(bookOrder));
 
 			/*
 			*	After I get the book order node, i use a for loop to find the right queue, then i insert the queue
 			*/
-			int count_cat;
-			for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
-			{
-				if(strcmp(queue_array[count_cat]->category, temp->category) == 0)
+			if(temp->title != NULL &&temp->price != 0 && temp->category != NULL && temp->customer_ID != 0){
+				int count_cat;
+				for(count_cat = 0; count_cat < number_of_categories; count_cat++ )
 				{
-					insertBookOrder(queue_array[count_cat], temp);
-					break;
+					if(strcmp(queue_array[count_cat]->category, temp->category) == 0 )
+					{
+						insertBookOrder(queue_array[count_cat], &temp);
+						break;
+					}
 				}
 			}
-
+		}
 	}
-
-}
 }
 
 
@@ -111,9 +115,11 @@ void initializeBookStruct(bookOrder *pointer){
 void consumerThread(queue* queue)
 {
 
-	customer *temp_customer = NULL;
-	bookOrder *tempOrder = removeBookOrder(queue);
-	bookOrder *traversal_order = NULL;
+	hash_cell *temp_customer = NULL;
+	bookOrder *tempOrder = NULL;
+	if(queue->position_of_last_item != queue->position_of_first_item){
+		tempOrder = removeBookOrder(queue);
+	}
 
 	/*
 	*	This first while loop will make sure the book order that you're trying to process isn't null. 
@@ -125,33 +131,28 @@ void consumerThread(queue* queue)
 		*	so each customer has a semaphore, which protects the customer from being accessed by multiple
 		* 	threads.
 		*/
-		temp_customer = exclusivelyDealWithCustomer(tempOrder->customer_ID);
-		
 
+		temp_customer = findCustomer(tempOrder->customer_ID);
+		sem_post(&temp_customer->mutex);
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
 		*/
-		if(temp_customer->balance >= tempOrder->price){
+		if(temp_customer->cust->balance >= tempOrder->price){
 
-			temp_customer->balance = temp_customer->balance - tempOrder->price;
+			temp_customer->cust->balance = temp_customer->cust->balance - tempOrder->price;
+			tempOrder->remaining_Balance = temp_customer->cust->balance;
+			tempOrder->next = temp_customer->cust->success_order;
+			temp_customer->cust->success_order = tempOrder;
 
-			tempOrder->remaining_Balance = temp_customer->balance;
-			traversal_order = temp_customer->success_order;
-			while(traversal_order != NULL){
-				traversal_order = traversal_order->next;
-			}
-			traversal_order = tempOrder;
 		}
 		else{
-			traversal_order = temp_customer->fail_order;
-			while(traversal_order != NULL){
-				traversal_order = traversal_order->next;
-			}
-			traversal_order = tempOrder;
+			tempOrder->next = temp_customer->cust->fail_order;
+			temp_customer->cust->fail_order = tempOrder;
 		}
 		
-		tempOrder = removeBookOrder(queue);
-		doneWithCustomer(temp_customer);
+		if(queue->position_of_last_item != queue->position_of_first_item){
+			tempOrder = removeBookOrder(queue);
+		}
 	}
 	
 }
@@ -167,8 +168,10 @@ void printFinalReport(FILE* finalDatabase)
 	bookOrder* traversal_order;
 	float totalRevenueProduced = 0;
 
-	for(i = 1; findCustomer(i) != NULL; i++){
-		traversal_customer = findCustomer(i);
+	for(i = 1; findCustomerFinal(i) != NULL; i++){
+		traversal_customer= findCustomerFinal(i);
+
+
 		fputs("== BEGIN CUSTOMER INFO ==\n", finalDatabase);
 		fputs("### BALANCE ###\n", finalDatabase);
 		fprintf(finalDatabase, "Customer Name: %s \n", traversal_customer->name);
@@ -201,6 +204,10 @@ void printFinalReport(FILE* finalDatabase)
 void initializeQueue(queue* temp_queue, char* category)
 {
 	temp_queue->cat_orders = malloc(sizeof(bookOrder *) * MAX);
+	int i;
+	for(i = 0; i < MAX; i++){
+		temp_queue->cat_orders[i] = malloc(sizeof(bookOrder));
+	}
 	temp_queue->category = calloc(strlen(category), sizeof(char));
 	strncpy(temp_queue->category ,category,strlen(category)); 
 	temp_queue->size = MAX;
@@ -214,10 +221,11 @@ void initializeQueue(queue* temp_queue, char* category)
 *	This will insert a book node into the designated queue
 */
 
-void insertBookOrder(queue *order_cont, bookOrder *book){
+void insertBookOrder(queue *order_cont, bookOrder **book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
-	order_cont->cat_orders[(++order_cont->position_of_last_item)%(order_cont->size)] = book;
+	order_cont->position_of_last_item++;
+	order_cont->cat_orders[((order_cont->position_of_last_item) %(order_cont->size))] = *book;
 	sem_post(&order_cont->mutex);
 	sem_post(&order_cont->items);
 }
@@ -230,7 +238,8 @@ bookOrder *removeBookOrder(queue *temp_order){
 	bookOrder *item;
 	sem_wait(&temp_order->items);
 	sem_wait(&temp_order->mutex);
-	item = temp_order->cat_orders[(++temp_order->position_of_first_item)%(temp_order->size)];
+	temp_order->position_of_first_item++;
+	item = temp_order->cat_orders[(temp_order->position_of_first_item)%(temp_order->size)];
 	sem_post(&temp_order->mutex);
 	sem_post(&temp_order->slots);
 	return item;
@@ -293,9 +302,8 @@ void populateCustomerDatabase(FILE *customer_database){
 			token = strtok(NULL, customer_delim);
 		}
 
-		sem_init(&individual_customer->mutex, 0, 1);
-		individual_customer->success_order = NULL;
-		individual_customer->fail_order = NULL;
+		individual_customer->success_order = malloc(sizeof(bookOrder));
+		individual_customer->fail_order = malloc(sizeof(bookOrder));
 
 		addCustomer(individual_customer, customer_id);
 	}
@@ -313,6 +321,7 @@ void addCustomer(customer* customerI, int customerID){
 
 		temp = malloc(sizeof(hash_cell));
 		temp->customer_ID = customerID;
+		sem_init(&temp->mutex, 0, 1);
 		HASH_ADD_INT(customer_database, customer_ID, temp);
 	}
 
@@ -354,35 +363,27 @@ void freeCustomerBookOrder(bookOrder* order){
 *	This function is going to take in the customer id (the book order will have it), and it's going to use the 
 *	UTHASH functions to retrieve the hash cell that contains the customer, then it returns the customer
 */
-customer *findCustomer(int customerID)
+hash_cell *findCustomer(int customerID)
 {
 	hash_cell *tmp;
 
 	HASH_FIND_INT(customer_database, &customerID, tmp);
 
-	sem_wait(&tmp->cust->mutex);
+	sem_wait(&tmp->mutex);
+	return tmp;
+}
+
+/*
+*	The final report is not a thread, but it still needs access to the customer, so i built a function to solve the problem
+*/
+customer *findCustomerFinal(int customerID)
+{
+	hash_cell *tmp;
+
+	HASH_FIND_INT(customer_database, &customerID, tmp);
 
 	return tmp->cust;
 }
-/*
-*	This is a function to help synchronize the customer
-*/
-
-customer *exclusivelyDealWithCustomer(int customer_ID){
-	customer* custom;
-	custom = findCustomer(customer_ID);
-	sem_wait(&custom->mutex);
-	return custom;
-}
-
-
-/*
-*	This is a function to help synchronize the customer
-*/
-void doneWithCustomer(customer * custom){
-	sem_post(&custom->mutex);
-}
-
 /*
 *	This main function is simple, it takes in arguments, makes sure that the arguments are correct, then it
 *	attempts to open the file necessary. 
@@ -394,7 +395,7 @@ int main(int argc, char* argv[])
 {
 	if(argc!= 4){
 		printf("Error: Incorrect Input \n");
-		printf("Correct Arguments: ./bookorders [arg1] [arg2] [arg3]\n");
+		printf("Correct Arguments: ./books [arg1] [arg2] [arg3]\n");
 		printf("Arg1- The name of the database input file \nArg2 - The name of the book order input file\n");
 		printf("Arg3 - The name of the category input file\n");
 		exit(0);
@@ -414,6 +415,7 @@ int main(int argc, char* argv[])
 	int i;
 	char *token;
 	int ch;
+	number_of_categories = 1;
 	 do
     {
    	ch = fgetc(categories);
