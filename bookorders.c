@@ -73,7 +73,7 @@ void producerThread(FILE *orders)
 				}
 				token = strtok(NULL, token_delim);
 			}
-			temp->next = NULL;
+			temp->next = malloc(sizeof(bookOrder));
 
 			/*
 			*	After I get the book order node, i use a for loop to find the right queue, then i insert the queue
@@ -156,7 +156,6 @@ void consumerThread(queue* queue)
 				traversal_order = traversal_order->next;
 			}
 		}
-		traversal_order = malloc(sizeof(bookOrder));
 		traversal_order = tempOrder;
 		sem_post(&temp_customer->mutex);
 		
@@ -321,8 +320,8 @@ void populateCustomerDatabase(FILE *customer_database){
 			token = strtok(NULL, customer_delim);
 		}
 
-		individual_customer->success_order = NULL;
-		individual_customer->fail_order = NULL;
+		individual_customer->success_order = malloc(sizeof(bookOrder));
+		individual_customer->fail_order = malloc(sizeof(bookOrder));
 
 		addCustomer(individual_customer, customer_id);
 	}
