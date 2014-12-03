@@ -4,6 +4,7 @@
 queue **queue_array = NULL;
 hash_cell *customer_database = NULL;
 int number_of_categories = 0;
+char *last_name;
 
 /*
 *	This is the function for the producer thread
@@ -91,7 +92,10 @@ void producerThread(FILE *orders)
 				}
 			}
 		}
+		last_name = malloc(sizeof(char)*strlen(temp->title));
+		strcpy(last_name, temp->title);
 	}
+
 }
 
 
@@ -147,8 +151,12 @@ void consumerThread(queue* queue)
 			temp_customer->cust->fail_order = tempOrder;
 		}
 		sem_post(&temp_customer->mutex);
-		
-		tempOrder = removeBookOrder(queue);
+		if(queue->position_of_first_item != queue->position_of_first_item){
+			tempOrder = removeBookOrder(queue);
+		}
+		else{
+			tempOrder = NULL;
+		}
 	}
 	
 }
