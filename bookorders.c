@@ -13,6 +13,7 @@ char *last_name;
 void producerThread(FILE *orders)
 {
 
+	pthread_detach(pthread_self());
 	printf("Processor Thread has begun processing\n");
 	char order_temp[256];
 	bookOrder *temp = NULL;
@@ -118,7 +119,7 @@ void initializeBookStruct(bookOrder *pointer){
 
 void consumerThread(queue* queue)
 {
-
+	pthread_detach(pthread_self());
 	hash_cell *temp_customer = NULL;
 	bookOrder *tempOrder = NULL;
 		tempOrder = removeBookOrder(queue);
@@ -154,7 +155,7 @@ void consumerThread(queue* queue)
 		if(queue->position_of_first_item == queue ->position_of_last_item && producerDone == 1){
 			tempOrder = NULL;
 		}else{
-		tempOrder = removeBookOrder(queue);
+			tempOrder = removeBookOrder(queue);
 		}
 	}
 	
