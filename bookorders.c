@@ -131,7 +131,6 @@ void consumerThread(queue* queue)
 		*/
 
 		temp_customer = findCustomer(tempOrder->customer_ID);
-		sem_post(temp_customer->mutex);
 		/*
 		*	The if statement makes sure that the customer has enough funds to purchase the bookOrder
 		*/
@@ -147,8 +146,9 @@ void consumerThread(queue* queue)
 			tempOrder->next = temp_customer->cust->fail_order;
 			temp_customer->cust->fail_order = tempOrder;
 		}
+		sem_post(&temp_customer->mutex);
 		
-			tempOrder = removeBookOrder(queue);
+		tempOrder = removeBookOrder(queue);
 	}
 	
 }
