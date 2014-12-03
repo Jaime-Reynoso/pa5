@@ -405,6 +405,10 @@ customer *findCustomerFinal(int customerID)
 */
 int main(int argc, char* argv[])
 {
+
+	pthread_attr_t tattr;
+	int ret;
+
 	if(argc!= 4){
 		printf("Error: Incorrect Input \n");
 		printf("Correct Arguments: ./books [arg1] [arg2] [arg3]\n");
@@ -412,6 +416,8 @@ int main(int argc, char* argv[])
 		printf("Arg3 - The name of the category input file\n");
 		exit(0);
 	}
+
+	ret = pthread_attr_init(&tattr);
 
 	FILE *categories = fopen(argv[3], "r");
 	FILE *orders = fopen(argv[2], "r");
@@ -430,7 +436,7 @@ int main(int argc, char* argv[])
 	number_of_categories = 1;
 	 do
     {
-   	ch = fgetc(categories);
+   		ch = fgetc(categories);
    if( ch== '\n') number_of_categories++;   
    }while( ch != EOF );
 	fseek(categories, 0, SEEK_SET);
@@ -457,10 +463,10 @@ int main(int argc, char* argv[])
 
 	for(i = 0; i <= number_of_categories;i++){
 		if(i == 0){
-			pthread_create(&thread[i], NULL,(void *)producerThread, (void *)orders);
+			pthread_create(&thread[i], &tattr,(void *)producerThread, (void *)orders);
 		}
 		else{
-			pthread_create(&thread[i], NULL,(void *)consumerThread, (void *)queue_array[i-1]);
+			pthread_create(&thread[i], &tattr,(void *)consumerThread, (void *)queue_array[i-1]);
 		}
 	}
 	for(i = 0;i <= number_of_categories; i++){
