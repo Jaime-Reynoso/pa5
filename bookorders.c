@@ -5,7 +5,8 @@ queue **queue_array = NULL;
 hash_cell *customer_database = NULL;
 int number_of_categories = 0, producerDone = 0;
 char *last_name;
-int sem_value; // getting a deadlock, testing purposes
+int sem_value;
+int bookORder = 0; // getting a deadlock, testing purposes
 
 /*
 *	This is the function for the producer thread
@@ -242,7 +243,7 @@ void insertBookOrder(queue *order_cont, bookOrder **book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
 	sem_getvalue(&order_cont->mutex, &sem_value);
-	printf("The book order queue mutex value is %d", sem_value);
+	printf("With book: %d The book order queue mutex value is %d\n", bookORder, sem_value);
 	order_cont->position_of_last_item++;
 	order_cont->cat_orders[((order_cont->position_of_last_item) %(order_cont->size))] = *book;
 	sem_post(&order_cont->mutex);
@@ -258,7 +259,7 @@ bookOrder *removeBookOrder(queue *temp_order){
 	sem_wait(&temp_order->items);
 	sem_wait(&temp_order->mutex);
 	sem_getvalue(&temp_order->mutex, &sem_value);
-	printf("The book order queue mutex value is %d", sem_value);
+	printf("The book order queue mutex value is %d \n", sem_value);
 	temp_order->position_of_first_item++;
 	item = temp_order->cat_orders[(temp_order->position_of_first_item)%(temp_order->size)];
 	sem_post(&temp_order->mutex);
