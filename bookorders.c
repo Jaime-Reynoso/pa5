@@ -146,21 +146,14 @@ void *consumerThread(queue* queue)
 			tempOrder->remaining_Balance = temp_customer->cust->balance;
 			tempOrder->next = temp_customer->cust->success_order;
 			temp_customer->cust->success_order = tempOrder;
-
+			
 		}
 		else{
 			tempOrder->next = temp_customer->cust->fail_order;
 			temp_customer->cust->fail_order = tempOrder;
 		}
 		sem_post(&temp_customer->mutex);
-		if(queue->position_of_first_item == queue ->position_of_last_item && producerDone == 1){
-			tempOrder = NULL;
-		}else{
-			tempOrder = removeBookOrder(queue);
-			sem_destroy(&queue->items);
-			sem_destroy(&queue->slots);
-			sem_destroy(&queue->mutex);
-		}
+		tempOrder = removeBookOrder(queue);
 	}
 
 	return NULL;
