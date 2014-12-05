@@ -158,7 +158,6 @@ void *consumerThread(queue* queue)
 		if(tempOrder -> price > 1000){
 			pthread_detach(pthread_self());
 			tempOrder = NULL;
-			pthread_exit(pthread_self());
 		}
 	}
 
