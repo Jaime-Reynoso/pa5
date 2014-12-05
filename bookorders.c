@@ -88,6 +88,7 @@ void *producerThread(FILE *orders)
 					if(strcmp(queue_array[count_cat]->category, temp->category) == 0 )
 					{
 						insertBookOrder(queue_array[count_cat], &temp);
+						if(bookORder == 29) pthread_detach( pthread_self());
 						break;
 					}
 				}
@@ -128,7 +129,7 @@ void *consumerThread(queue* queue)
 	/*
 	*	This first while loop will make sure the book order that you're trying to process isn't null. 
 	*/
-	while(tempOrder != NULL)
+	while(tempOrder != NULL && (tempOrder->price < 1000))
 	{
 		/*	
 		*	It'd be really unfortunate if more than one thread were to try to access the same customer
@@ -146,7 +147,7 @@ void *consumerThread(queue* queue)
 			tempOrder->remaining_Balance = temp_customer->cust->balance;
 			tempOrder->next = temp_customer->cust->success_order;
 			temp_customer->cust->success_order = tempOrder;
-			
+
 		}
 		else{
 			tempOrder->next = temp_customer->cust->fail_order;
@@ -154,6 +155,11 @@ void *consumerThread(queue* queue)
 		}
 		sem_post(&temp_customer->mutex);
 		tempOrder = removeBookOrder(queue);
+		if(tempOrder -> price > 1000){
+			pthread_detach(pthread_self());
+			tempOrder = NULL;
+			pthread_exit(pthread_self());
+		}
 	}
 
 	return NULL;
@@ -236,6 +242,7 @@ void insertBookOrder(queue *order_cont, bookOrder **book){
 	sem_wait(&order_cont->slots);
 	sem_wait(&order_cont->mutex);
 	sem_getvalue(&order_cont->mutex, &sem_value);
+	bookORder++;
 	printf("With book: %d The book order queue mutex value is %d\n", bookORder, sem_value);
 	order_cont->position_of_last_item++;
 	order_cont->cat_orders[((order_cont->position_of_last_item) %(order_cont->size))] = *book;
