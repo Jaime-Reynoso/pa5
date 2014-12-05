@@ -492,6 +492,6 @@ int main(int argc, char* argv[])
 	fclose(orders);
 	fclose(categories);
 	fclose(customer_database);
-	pthread_exit(NULL);
+	pthread_exit(pthread_self());
 
 }
