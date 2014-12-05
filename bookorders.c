@@ -160,6 +160,7 @@ void *consumerThread(queue* queue)
 			tempOrder = NULL;
 		}
 	}
+	pthread_exit(pthread_self());
 
 	return NULL;
 	
