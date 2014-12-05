@@ -129,7 +129,7 @@ void *consumerThread(queue* queue)
 	/*
 	*	This first while loop will make sure the book order that you're trying to process isn't null. 
 	*/
-	while(tempOrder != NULL && (tempOrder->price < 1000))
+	while(tempOrder != NULL )
 	{
 		/*	
 		*	It'd be really unfortunate if more than one thread were to try to access the same customer
@@ -154,12 +154,16 @@ void *consumerThread(queue* queue)
 			temp_customer->cust->fail_order = tempOrder;
 		}
 		sem_post(&temp_customer->mutex);
+		if(queue->position_of_first_item == queue->position_of_last_item && bookORder == 29){
+			break;
+		}
 		tempOrder = removeBookOrder(queue);
 		if(tempOrder -> price > 1000){
 			pthread_detach(pthread_self());
 			tempOrder = NULL;
 		}
 	}
+	pthread_detach(pthread_self());
 	pthread_exit(pthread_self());
 
 	return NULL;
